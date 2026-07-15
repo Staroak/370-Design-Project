@@ -9,7 +9,7 @@
 - Sprint 5 15 August 2026 - 21 August 2026 20% 21 August 2026 11:59 pm
 
 Project:
-creator tourney organizer for like online games and esports. handles and tracks tournaments, sponsorship contracts, iverables, revenue, expenses, and prize payouts in one system.
+Creating a database that helps organize creator tournaments for online games and esports. Handles and tracks tournaments, tournament details (time and date), sponsorship contracts, deliverables, finances (revenue/expenses), and prize payouts. 
 
 ## Initial Functional requirements list:
 
@@ -56,6 +56,8 @@ Note* Data will be generated as realistic mock data. Can scrape liquidpedia and 
 # Plan for Sprint 0:
 
 - Form group and scope out the idea
+- Discuss ideas with group members and create functional requirements list
+
 
 ## Plan for Sprint 1
 
