@@ -31,6 +31,7 @@ Creating a database that helps organize creator tournaments for online games and
 - Track sponsorship contracts
 - Track Content deliverables
 - Roles: Admin, staff, esports organization, players/teams, audience (security hierarchy, most to least)
+- Track payment logs of each staff (crew/casters/mods) member / winning teams
 
 # What the players/team/audience would want to see:
 
@@ -41,7 +42,7 @@ Creating a database that helps organize creator tournaments for online games and
 - Total prize pool
 - Game schedules
 - Event times and dates
-- Track payment logs of each staff (crew/casters/mods) member / winning teams
+
 
 ## Business Requirements:
 
