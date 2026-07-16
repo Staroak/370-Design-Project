@@ -1,4 +1,4 @@
-# Project Schedule
+#    Project Schedule
 
 - Sprint No. Working Period Weight Due Date
 - Project Kick-off 6 July 2026 - 17 July 2026 0% 17 July 2026 11:59 pm
@@ -32,7 +32,7 @@ creator tourney organizer for like online games and esports. handles and tracks 
 - Track Content deliverables
 - Roles: Admin, staff, esports organization, players/teams, audience (security hierarchy, most to least)
 
-# What the players/team would want to see:
+# What the players/team/audience would want to see:
 
 - Audience can also access database to check for information regarding the event
 - Players and team stats
@@ -63,3 +63,4 @@ Note* Data will be generated as realistic mock data. Can scrape liquidpedia and 
 - Implement the usage of multiplicity to organize and direct relations
 - Split information into different attributes, entity sets, relationships, identifiers, etc.
 - Be able to identify different functional dependencies, and anomalies
+- Identify and develop contraints
