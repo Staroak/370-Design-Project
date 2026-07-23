@@ -245,3 +245,4 @@ Note* Data will be generated as realistic mock data. Can scrape liquidpedia and 
 - Write out some of the basic tables and populate with some mock data. 
 - Implement schemas in SQL
 - Create scenarios on the usability of our db and write lines of SQL to test how we can pull information
+- Briefly review sprint 1 and attempt to identify any components or important details we have missed
