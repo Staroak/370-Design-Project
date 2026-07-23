@@ -83,6 +83,7 @@ Note* Data will be generated as realistic mock data. Can scrape liquidpedia and 
   - org_id unique and not null
   - created_date <= current date
 
+
 **Users**
 - Attributes: user_id(PK), full_name, email, password, phone
 - FDs:
