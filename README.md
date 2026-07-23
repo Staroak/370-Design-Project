@@ -67,3 +67,8 @@ Note* Data will be generated as realistic mock data. Can scrape liquidpedia and 
 - Split information into different attributes, entity sets, relationships, identifiers, etc.
 - Be able to identify different functional dependencies, and anomalies
 - Identify and develop contraints
+
+
+# Status Report for Sprint 1
+
+## Plan for Sprint 2
