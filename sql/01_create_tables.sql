@@ -1,4 +1,4 @@
-USE csc370;
+USE design_project_370;
 
 -- Drop table so we can re run the file to rebuild the tables.
 
