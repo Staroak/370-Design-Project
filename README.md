@@ -267,3 +267,12 @@ a
 ## Plan for Sprint 3
 *NOTE*
 Constraints marked APP/TRIGGER in the schema (same-game registration, no double-active-roster, date-vs-today, time-overlap rules) cannot be expressed as CHECK constraints because they span multiple tables/rows or use the current date. They would be enforced by triggers or application logic in a later sprint.
+
+Generalize the results model beyond 2-team matches.
+It can't represent solo, points-by-placement events (TFT, battle royale).
+Deliverable: replace the fixed team1_id/team2_id/winner_team_id columns with a MatchParticipant relation (match_id, competitor_id, placement, points) that supports any number of competitors per match, and add a competitor concept covering both a team and a solo player.
+Success criteria: the revised schema can store both a Valorant team match and an 8-player TFT lobby, and a query can return final standings for each. Also handle individual games where only one player is playing (Chess, Tetris, Rocket League 1v1).
+
+Develop user access levels and granting access permissions. 
+Create different view queries with different grant levels.
+
