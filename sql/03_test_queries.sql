@@ -18,10 +18,16 @@ FROM Tournament t
 ORDER BY profit DESC;
 
 
--- Q2: How many creators are in event #1?
-SELECT COUNT(*) AS creator_count
-FROM CreatorAssignment
-WHERE tournament_id = 1;
+-- Q2: Which creators are in event #1?
+SELECT
+    c.creator_id
+  , c.twitchlink
+  , c.instagram
+  , c.twitter
+  , ca.role
+FROM CreatorAssignment ca
+JOIN Creators c ON c.creator_id = ca.creator_id
+WHERE ca.tournament_id = 1;
 
 
 -- Q3: How many teams are participating in each tournament?
@@ -66,7 +72,8 @@ JOIN Tournament t ON t.tournament_id = m.tournament_id
 JOIN Game g       ON g.game_id = t.game_id
 JOIN Players pl   ON pl.player_id = pms.player_id
 GROUP BY g.game_id, g.title, pl.player_id, pl.ign
-ORDER BY g.title, total_kills DESC;
+ORDER BY g.title, total_kills DESC
+LIMIT 5;
 
 
 -- Q7: Which teams won the most tournaments? (champion = winner of the final match)
@@ -106,7 +113,8 @@ SELECT
 FROM Players pl
 JOIN PlayerMatchStats pms ON pms.player_id = pl.player_id
 GROUP BY pl.player_id, pl.ign
-ORDER BY kd_ratio DESC;
+ORDER BY kd_ratio DESC
+LIMIT 5;
 
 
 -- Q10: Who has admin power? (admin members of an organization)

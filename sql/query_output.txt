@@ -29,20 +29,27 @@ ORDER BY profit DESC
 |             2 | MTB Winter Clash |       2500.00 |       3000.00 | -500.00 |
 +---------------+------------------+---------------+---------------+---------+
 --------------
--- Q2: How many creators are in event #1?
+-- Q2: Which creators are in event #1?
 --------------
 
 --------------
-SELECT COUNT(*) AS creator_count
-FROM CreatorAssignment
-WHERE tournament_id = 1
+SELECT
+    c.creator_id
+  , c.twitchlink
+  , c.instagram
+  , c.twitter
+  , ca.role
+FROM CreatorAssignment ca
+JOIN Creators c ON c.creator_id = ca.creator_id
+WHERE ca.tournament_id = 1
 --------------
 
-+---------------+
-| creator_count |
-+---------------+
-|             2 |
-+---------------+
++------------+------------------+-------------------------+---------+----------+
+| creator_id | twitchlink       | instagram               | twitter | role     |
++------------+------------------+-------------------------+---------+----------+
+|          1 | twitch.tv/revrzd | NULL                    | NULL    | streamer |
+|          2 | NULL             | instagram.com/almondfps | NULL    | host     |
++------------+------------------+-------------------------+---------+----------+
 --------------
 -- Q3: How many teams are participating in each tournament?
 --------------
@@ -114,6 +121,7 @@ JOIN Game g       ON g.game_id = t.game_id
 JOIN Players pl   ON pl.player_id = pms.player_id
 GROUP BY g.game_id, g.title, pl.player_id, pl.ign
 ORDER BY g.title, total_kills DESC
+LIMIT 5
 --------------
 
 +----------+------------------------+-------------+
@@ -124,41 +132,6 @@ ORDER BY g.title, total_kills DESC
 | Valorant | aus#MTB                |          98 |
 | Valorant | im still shining#almor |          98 |
 | Valorant | Sleepy Femboy#rawr     |          95 |
-| Valorant | xixi#0830              |          91 |
-| Valorant | madge#koow             |          88 |
-| Valorant | carp#444               |          84 |
-| Valorant | playn with toes#toes   |          84 |
-| Valorant | Sa1ty#123              |          77 |
-| Valorant | sandtose#9610          |          69 |
-| Valorant | BangBang#Panda         |          66 |
-| Valorant | Zalphine#Snort         |          63 |
-| Valorant | ML revrzd#gato         |          54 |
-| Valorant | QOR ttinybones#AAAAA   |          54 |
-| Valorant | thecanadiancooki#SKZ   |          51 |
-| Valorant | SeijinTea#TTV          |          48 |
-| Valorant | kaleiydo#scope         |          45 |
-| Valorant | Tekkni#Shoot           |          42 |
-| Valorant | josepi#jac             |          39 |
-| Valorant | lil chicken wrap#ranch |          26 |
-| Valorant | olivegrovepapi#ttv     |          25 |
-| Valorant | ekittenuwuboy67#lumei  |          25 |
-| Valorant | oni#AURAA              |          25 |
-| Valorant | JareBear#TTV           |          23 |
-| Valorant | silly penguin13#dae    |          23 |
-| Valorant | icarus 407#VGS47       |          23 |
-| Valorant | BIG PT#OTOWN           |          21 |
-| Valorant | DoctorMoesy#TTV        |          20 |
-| Valorant | happycamper#1018       |          20 |
-| Valorant | Colt#GGTTV             |          20 |
-| Valorant | dberg#omen             |          18 |
-| Valorant | QOR hamouduh#Syria     |          17 |
-| Valorant | m0ld#dems              |          15 |
-| Valorant | laki#plays             |          15 |
-| Valorant | Rocke#813              |          15 |
-| Valorant | versi#nat              |          13 |
-| Valorant | singularity#kiwi       |          12 |
-| Valorant | juicebox#kitty         |          10 |
-| Valorant | Kairu#1473             |          10 |
 +----------+------------------------+-------------+
 --------------
 -- Q7: Which teams won the most tournaments? (champion = winner of the final match)
@@ -222,52 +195,18 @@ FROM Players pl
 JOIN PlayerMatchStats pms ON pms.player_id = pl.player_id
 GROUP BY pl.player_id, pl.ign
 ORDER BY kd_ratio DESC
+LIMIT 5
 --------------
 
-+------------------------+----------+
-| ign                    | kd_ratio |
-+------------------------+----------+
-| oni#AURAA              |     2.78 |
-| silly penguin13#dae    |     2.56 |
-| DoctorMoesy#TTV        |     2.50 |
-| olivegrovepapi#ttv     |     1.92 |
-| BIG PT#OTOWN           |     1.91 |
-| icarus 407#VGS47       |     1.77 |
-| sandtose#9610          |     1.77 |
-| im still shining#almor |     1.69 |
-| happycamper#1018       |     1.67 |
-| lil chicken wrap#ranch |     1.63 |
-| skytookie#sub          |     1.61 |
-| Coach Lobster#Coach    |     1.58 |
-| BangBang#Panda         |     1.57 |
-| QOR hamouduh#Syria     |     1.55 |
-| madge#koow             |     1.52 |
-| QOR ttinybones#AAAAA   |     1.50 |
-| xixi#0830              |     1.49 |
-| ekittenuwuboy67#lumei  |     1.47 |
-| versi#nat              |     1.44 |
-| Zalphine#Snort         |     1.40 |
-| Rocke#813              |     1.36 |
-| Sleepy Femboy#rawr     |     1.34 |
-| aus#MTB                |     1.32 |
-| thecanadiancooki#SKZ   |     1.31 |
-| dberg#omen             |     1.29 |
-| Colt#GGTTV             |     1.25 |
-| playn with toes#toes   |     1.24 |
-| JareBear#TTV           |     1.21 |
-| josepi#jac             |     1.18 |
-| carp#444               |     1.17 |
-| Tekkni#Shoot           |     1.17 |
-| Sa1ty#123              |     1.15 |
-| SeijinTea#TTV          |     1.14 |
-| ML revrzd#gato         |     1.13 |
-| m0ld#dems              |     1.00 |
-| kaleiydo#scope         |     1.00 |
-| laki#plays             |     0.79 |
-| juicebox#kitty         |     0.71 |
-| singularity#kiwi       |     0.67 |
-| Kairu#1473             |     0.56 |
-+------------------------+----------+
++---------------------+----------+
+| ign                 | kd_ratio |
++---------------------+----------+
+| oni#AURAA           |     2.78 |
+| silly penguin13#dae |     2.56 |
+| DoctorMoesy#TTV     |     2.50 |
+| olivegrovepapi#ttv  |     1.92 |
+| BIG PT#OTOWN        |     1.91 |
++---------------------+----------+
 --------------
 -- Q10: Who has admin power? (admin members of an organization)
 --------------
