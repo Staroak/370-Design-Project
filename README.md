@@ -262,7 +262,17 @@ Needed to add an EsportsOrg entity as well, as this service is something that mu
 - Constraints:
   - name must be unique
   - esports_org_id unique and not null
-a
+
+  
+- Implemented live and mock data into our db from previous tourneys to see if our db model would support it
+
+- Implemented schemas
+
+- Identified all BNCF Decompositions 
+
+- Created a variety of test scenarios that test the usability of our database to identify underlying constraints or problems and to fulfil the business requirements.
+
+  
 
 ## Plan for Sprint 3
 *NOTE*
