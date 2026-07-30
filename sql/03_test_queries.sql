@@ -1,9 +1,4 @@
 -- =====================================================================
--- CSC370 Term Project — Esports / Creator Tournament Database
--- 03_test_queries.sql : scenario queries that test "pulling information".
--- Run order: 01_create_tables.sql -> 02_insert_data.sql -> this file.
--- =====================================================================
-
 USE design_project_370;
 
 
