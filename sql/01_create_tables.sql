@@ -22,6 +22,7 @@ DROP TABLE IF EXISTS Sponsors;
 DROP TABLE IF EXISTS Players;
 DROP TABLE IF EXISTS Game;
 DROP TABLE IF EXISTS Users;
+DROP TABLE IF EXISTS EsportsOrg;
 DROP TABLE IF EXISTS Organization;
 
 
@@ -29,13 +30,22 @@ DROP TABLE IF EXISTS Organization;
 -- GROUP 1 INDEPENDENT ENTITIES (no outgoing foreign keys)
 
 
-CREATE TABLE Organization (
+CREATE TABLE Organization (            -- tournament organizer (uses the service)
     org_id         INT           NOT NULL AUTO_INCREMENT
   , org_name       VARCHAR(255)  NOT NULL
   , contact_email  VARCHAR(255)
   , created_date   DATE
   , region         VARCHAR(100)
   , PRIMARY KEY (org_id)
+);
+
+CREATE TABLE EsportsOrg (              -- a team's parent org, e.g. TSM, Cloud9
+    esports_org_id  INT           NOT NULL AUTO_INCREMENT
+  , name            VARCHAR(255)  NOT NULL
+  , region          VARCHAR(100)
+  , founded_date    DATE
+  , PRIMARY KEY (esports_org_id)
+  , UNIQUE (name)
 );
 
 CREATE TABLE Users (
@@ -110,16 +120,16 @@ CREATE TABLE Tournament (
 );
 
 CREATE TABLE Teams (
-    team_id       INT           NOT NULL AUTO_INCREMENT
-  , team_name     VARCHAR(255)  NOT NULL
-  , region        VARCHAR(100)
-  , founded_date  DATE
-  , game_id       INT           NOT NULL
-  , linked_org    INT
+    team_id         INT           NOT NULL AUTO_INCREMENT
+  , team_name       VARCHAR(255)  NOT NULL
+  , region          VARCHAR(100)
+  , founded_date    DATE
+  , game_id         INT           NOT NULL
+  , esports_org_id  INT
   , PRIMARY KEY (team_id)
   , UNIQUE (team_name)
-  , FOREIGN KEY (game_id)    REFERENCES Game (game_id)
-  , FOREIGN KEY (linked_org) REFERENCES Organization (org_id)
+  , FOREIGN KEY (game_id)        REFERENCES Game (game_id)
+  , FOREIGN KEY (esports_org_id) REFERENCES EsportsOrg (esports_org_id)
 );
 
 CREATE TABLE `Match` (

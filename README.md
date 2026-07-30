@@ -248,6 +248,22 @@ Note* Data will be generated as realistic mock data. Can scrape liquidpedia and 
 - Briefly review sprint 1 and attempt to identify any components or important details we have missed
 
 
+## Status Report for sprint 2
+
+Problem we identified:
+
+Didn’t set up the ERD as properly as we thought. 
+Needed to add an EsportsOrg entity as well, as this service is something that multiple tourney orgs can use. So from a db standpoint, we should track that as a separate table. 
+
+**EsportsOrg** (a team's parent org, e.g. TSM, Cloud9)
+- Attributes: esports_org_id(PK), name, region, founded_date
+- FDs:
+  - esports_org_id -> name, region, founded_date
+- Constraints:
+  - name must be unique
+  - esports_org_id unique and not null
+a
+
 ## Plan for Sprint 3
 *NOTE*
 Constraints marked APP/TRIGGER in the schema (same-game registration, no double-active-roster, date-vs-today, time-overlap rules) cannot be expressed as CHECK constraints because they span multiple tables/rows or use the current date. They would be enforced by triggers or application logic in a later sprint.
