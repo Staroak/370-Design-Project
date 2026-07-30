@@ -246,3 +246,8 @@ Note* Data will be generated as realistic mock data. Can scrape liquidpedia and 
 - Implement schemas in SQL
 - Create scenarios on the usability of our db and write lines of SQL to test how we can pull information
 - Briefly review sprint 1 and attempt to identify any components or important details we have missed
+
+
+## Plan for Sprint 3
+*NOTE*
+Constraints marked APP/TRIGGER in the schema (same-game registration, no double-active-roster, date-vs-today, time-overlap rules) cannot be expressed as CHECK constraints because they span multiple tables/rows or use the current date. They would be enforced by triggers or application logic in a later sprint.
