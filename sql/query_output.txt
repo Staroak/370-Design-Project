@@ -1,0 +1,344 @@
+﻿--------------
+-- =====================================================================
+--------------
+
+--------------
+-- Q1: Is this tournament profitable? (revenue - expenses per tournament)
+--------------
+
+--------------
+SELECT
+    t.tournament_id
+  , t.name
+  , (SELECT SUM(tr.amount) FROM Transactions tr
+     WHERE tr.tournament_id = t.tournament_id AND tr.type = 'revenue') AS total_revenue
+  , (SELECT SUM(tr.amount) FROM Transactions tr
+     WHERE tr.tournament_id = t.tournament_id AND tr.type = 'expense') AS total_expense
+  , (SELECT SUM(tr.amount) FROM Transactions tr
+     WHERE tr.tournament_id = t.tournament_id AND tr.type = 'revenue')
+  - (SELECT SUM(tr.amount) FROM Transactions tr
+     WHERE tr.tournament_id = t.tournament_id AND tr.type = 'expense') AS profit
+FROM Tournament t
+ORDER BY profit DESC
+--------------
+
++---------------+------------------+---------------+---------------+---------+
+| tournament_id | name             | total_revenue | total_expense | profit  |
++---------------+------------------+---------------+---------------+---------+
+|             1 | Creator Cup      |       9500.00 |       8200.00 | 1300.00 |
+|             2 | MTB Winter Clash |       2500.00 |       3000.00 | -500.00 |
++---------------+------------------+---------------+---------------+---------+
+--------------
+-- Q2: How many creators are in event #1?
+--------------
+
+--------------
+SELECT COUNT(*) AS creator_count
+FROM CreatorAssignment
+WHERE tournament_id = 1
+--------------
+
++---------------+
+| creator_count |
++---------------+
+|             2 |
++---------------+
+--------------
+-- Q3: How many teams are participating in each tournament?
+--------------
+
+--------------
+SELECT
+    t.tournament_id
+  , t.name
+  , COUNT(r.team_id) AS teams_registered
+FROM Tournament t
+LEFT JOIN Registration r ON r.tournament_id = t.tournament_id
+GROUP BY t.tournament_id, t.name
+ORDER BY teams_registered DESC
+--------------
+
++---------------+------------------+------------------+
+| tournament_id | name             | teams_registered |
++---------------+------------------+------------------+
+|             1 | Creator Cup      |                8 |
+|             2 | MTB Winter Clash |                4 |
++---------------+------------------+------------------+
+--------------
+-- Q4: What organizations (esports orgs) are present in tournament #1?
+--------------
+
+--------------
+SELECT DISTINCT
+    eo.esports_org_id
+  , eo.name
+FROM Registration r
+JOIN Teams tm      ON tm.team_id = r.team_id
+JOIN EsportsOrg eo ON eo.esports_org_id = tm.esports_org_id
+WHERE r.tournament_id = 1
+--------------
+
++----------------+------+
+| esports_org_id | name |
++----------------+------+
+|              1 | MTB  |
+|              2 | QOR  |
++----------------+------+
+--------------
+-- Q5: Which game is being played for tournament #5?
+--------------
+
+--------------
+SELECT
+    t.tournament_id
+  , t.name
+  , g.title AS game
+FROM Tournament t
+JOIN Game g ON g.game_id = t.game_id
+WHERE t.tournament_id = 5
+--------------
+
+--------------
+-- Q6: Who are the top players in each game title? (by total kills, top listed first)
+--------------
+
+--------------
+SELECT
+    g.title AS game
+  , pl.ign
+  , SUM(pms.kills) AS total_kills
+FROM PlayerMatchStats pms
+JOIN `Match` m    ON m.match_id = pms.match_id
+JOIN Tournament t ON t.tournament_id = m.tournament_id
+JOIN Game g       ON g.game_id = t.game_id
+JOIN Players pl   ON pl.player_id = pms.player_id
+GROUP BY g.game_id, g.title, pl.player_id, pl.ign
+ORDER BY g.title, total_kills DESC
+--------------
+
++----------+------------------------+-------------+
+| game     | ign                    | total_kills |
++----------+------------------------+-------------+
+| Valorant | Coach Lobster#Coach    |         109 |
+| Valorant | skytookie#sub          |         106 |
+| Valorant | aus#MTB                |          98 |
+| Valorant | im still shining#almor |          98 |
+| Valorant | Sleepy Femboy#rawr     |          95 |
+| Valorant | xixi#0830              |          91 |
+| Valorant | madge#koow             |          88 |
+| Valorant | carp#444               |          84 |
+| Valorant | playn with toes#toes   |          84 |
+| Valorant | Sa1ty#123              |          77 |
+| Valorant | sandtose#9610          |          69 |
+| Valorant | BangBang#Panda         |          66 |
+| Valorant | Zalphine#Snort         |          63 |
+| Valorant | ML revrzd#gato         |          54 |
+| Valorant | QOR ttinybones#AAAAA   |          54 |
+| Valorant | thecanadiancooki#SKZ   |          51 |
+| Valorant | SeijinTea#TTV          |          48 |
+| Valorant | kaleiydo#scope         |          45 |
+| Valorant | Tekkni#Shoot           |          42 |
+| Valorant | josepi#jac             |          39 |
+| Valorant | lil chicken wrap#ranch |          26 |
+| Valorant | olivegrovepapi#ttv     |          25 |
+| Valorant | ekittenuwuboy67#lumei  |          25 |
+| Valorant | oni#AURAA              |          25 |
+| Valorant | JareBear#TTV           |          23 |
+| Valorant | silly penguin13#dae    |          23 |
+| Valorant | icarus 407#VGS47       |          23 |
+| Valorant | BIG PT#OTOWN           |          21 |
+| Valorant | DoctorMoesy#TTV        |          20 |
+| Valorant | happycamper#1018       |          20 |
+| Valorant | Colt#GGTTV             |          20 |
+| Valorant | dberg#omen             |          18 |
+| Valorant | QOR hamouduh#Syria     |          17 |
+| Valorant | m0ld#dems              |          15 |
+| Valorant | laki#plays             |          15 |
+| Valorant | Rocke#813              |          15 |
+| Valorant | versi#nat              |          13 |
+| Valorant | singularity#kiwi       |          12 |
+| Valorant | juicebox#kitty         |          10 |
+| Valorant | Kairu#1473             |          10 |
++----------+------------------------+-------------+
+--------------
+-- Q7: Which teams won the most tournaments? (champion = winner of the final match)
+--------------
+
+--------------
+SELECT
+    tm.team_name
+  , COUNT(*) AS tournaments_won
+FROM `Match` m
+JOIN Teams tm ON tm.team_id = m.winner_team_id
+WHERE m.scheduled_time = (
+    SELECT MAX(m2.scheduled_time)
+    FROM `Match` m2
+    WHERE m2.tournament_id = m.tournament_id
+)
+GROUP BY tm.team_id, tm.team_name
+ORDER BY tournaments_won DESC
+--------------
+
++-------------------+-----------------+
+| team_name         | tournaments_won |
++-------------------+-----------------+
+| Triple T's Sahurs |               1 |
+| The Almond Joys   |               1 |
++-------------------+-----------------+
+--------------
+-- Q8: Who is still owed money? (staff and teams with unpaid status)
+--------------
+
+--------------
+SELECT 'staff' AS payee_type, u.full_name AS payee, t.name AS tournament, p.amount, p.status
+FROM Payments p
+JOIN Users u      ON u.user_id = p.staff_user_id
+JOIN Tournament t ON t.tournament_id = p.tournament_id
+WHERE p.status <> 'paid'
+UNION
+SELECT 'team' AS payee_type, tm.team_name AS payee, t.name AS tournament, p.amount, p.status
+FROM Payments p
+JOIN Teams tm     ON tm.team_id = p.team_id
+JOIN Tournament t ON t.tournament_id = p.tournament_id
+WHERE p.status <> 'paid'
+ORDER BY amount DESC
+--------------
+
++------------+-----------------+------------------+---------+---------+
+| payee_type | payee           | tournament       | amount  | status  |
++------------+-----------------+------------------+---------+---------+
+| team       | The Almond Joys | MTB Winter Clash | 2000.00 | pending |
+| staff      | Lead Moderator  | Creator Cup      |  300.00 | pending |
++------------+-----------------+------------------+---------+---------+
+--------------
+-- Q9: Which players have the highest and lowest K/D ratio? (highest first, lowest last)
+--------------
+
+--------------
+SELECT
+    pl.ign
+  , ROUND(SUM(pms.kills) / SUM(pms.deaths), 2) AS kd_ratio
+FROM Players pl
+JOIN PlayerMatchStats pms ON pms.player_id = pl.player_id
+GROUP BY pl.player_id, pl.ign
+ORDER BY kd_ratio DESC
+--------------
+
++------------------------+----------+
+| ign                    | kd_ratio |
++------------------------+----------+
+| oni#AURAA              |     2.78 |
+| silly penguin13#dae    |     2.56 |
+| DoctorMoesy#TTV        |     2.50 |
+| olivegrovepapi#ttv     |     1.92 |
+| BIG PT#OTOWN           |     1.91 |
+| icarus 407#VGS47       |     1.77 |
+| sandtose#9610          |     1.77 |
+| im still shining#almor |     1.69 |
+| happycamper#1018       |     1.67 |
+| lil chicken wrap#ranch |     1.63 |
+| skytookie#sub          |     1.61 |
+| Coach Lobster#Coach    |     1.58 |
+| BangBang#Panda         |     1.57 |
+| QOR hamouduh#Syria     |     1.55 |
+| madge#koow             |     1.52 |
+| QOR ttinybones#AAAAA   |     1.50 |
+| xixi#0830              |     1.49 |
+| ekittenuwuboy67#lumei  |     1.47 |
+| versi#nat              |     1.44 |
+| Zalphine#Snort         |     1.40 |
+| Rocke#813              |     1.36 |
+| Sleepy Femboy#rawr     |     1.34 |
+| aus#MTB                |     1.32 |
+| thecanadiancooki#SKZ   |     1.31 |
+| dberg#omen             |     1.29 |
+| Colt#GGTTV             |     1.25 |
+| playn with toes#toes   |     1.24 |
+| JareBear#TTV           |     1.21 |
+| josepi#jac             |     1.18 |
+| carp#444               |     1.17 |
+| Tekkni#Shoot           |     1.17 |
+| Sa1ty#123              |     1.15 |
+| SeijinTea#TTV          |     1.14 |
+| ML revrzd#gato         |     1.13 |
+| m0ld#dems              |     1.00 |
+| kaleiydo#scope         |     1.00 |
+| laki#plays             |     0.79 |
+| juicebox#kitty         |     0.71 |
+| singularity#kiwi       |     0.67 |
+| Kairu#1473             |     0.56 |
++------------------------+----------+
+--------------
+-- Q10: Who has admin power? (admin members of an organization)
+--------------
+
+--------------
+SELECT DISTINCT
+    u.user_id
+  , u.full_name
+  , m.role
+  , o.org_name
+FROM Users u
+JOIN Membership m   ON m.user_id = u.user_id
+JOIN Organization o ON o.org_id  = m.org_id
+WHERE m.role = 'admin'
+--------------
+
++---------+------------------+-------+------------+
+| user_id | full_name        | role  | org_name   |
++---------+------------------+-------+------------+
+|       9 | Tournament Admin | admin | MTB Events |
++---------+------------------+-------+------------+
+--------------
+-- Q11: Were sponsor deliverables fulfilled? (count per sponsor, per status)
+--------------
+
+--------------
+SELECT
+    s.company_name
+  , d.status
+  , COUNT(*) AS num_deliverables
+FROM Sponsors s
+JOIN Contracts c    ON c.sponsor_id = s.sponsor_id AND c.party_type = 'sponsor'
+JOIN Deliverables d ON d.contract_id = c.contract_id
+GROUP BY s.sponsor_id, s.company_name, d.status
+ORDER BY s.company_name, d.status
+--------------
+
++--------------+-----------+------------------+
+| company_name | status    | num_deliverables |
++--------------+-----------+------------------+
+| Discord      | fulfilled |                1 |
+| Logitech     | fulfilled |                1 |
+| Logitech     | pending   |                1 |
+| Red Bull     | fulfilled |                2 |
++--------------+-----------+------------------+
+--------------
+-- Q12: Which sponsors are worth renewing? (total spend + deliverable fulfillment)
+--------------
+
+--------------
+SELECT
+    s.company_name
+  , (SELECT SUM(c.total_value)
+     FROM Contracts c
+     WHERE c.sponsor_id = s.sponsor_id AND c.party_type = 'sponsor') AS total_spend
+  , (SELECT COUNT(*)
+     FROM Deliverables d
+     JOIN Contracts c ON d.contract_id = c.contract_id
+     WHERE c.sponsor_id = s.sponsor_id) AS deliverables_total
+  , (SELECT COUNT(*)
+     FROM Deliverables d
+     JOIN Contracts c ON d.contract_id = c.contract_id
+     WHERE c.sponsor_id = s.sponsor_id AND d.status = 'fulfilled') AS deliverables_fulfilled
+FROM Sponsors s
+ORDER BY total_spend DESC
+--------------
+
++--------------+-------------+--------------------+------------------------+
+| company_name | total_spend | deliverables_total | deliverables_fulfilled |
++--------------+-------------+--------------------+------------------------+
+| Red Bull     |     5000.00 |                  2 |                      2 |
+| Logitech     |     3000.00 |                  2 |                      1 |
+| Discord      |     2500.00 |                  1 |                      1 |
++--------------+-------------+--------------------+------------------------+
