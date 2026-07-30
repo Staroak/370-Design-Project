@@ -1,6 +1,6 @@
 USE csc370;
 
---Drop table so we can re run the file to rebuild the tables.
+-- Drop table so we can re run the file to rebuild the tables.
 
 DROP TABLE IF EXISTS CreatorMatches;
 DROP TABLE IF EXISTS StaffMatches;
