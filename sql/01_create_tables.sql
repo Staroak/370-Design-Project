@@ -133,6 +133,26 @@ CREATE TABLE Teams (
   , FOREIGN KEY (esports_org_id) REFERENCES EsportsOrg (esports_org_id)
 );
 
+CREATE TABLE Competitor (
+      competitor_id    INT                    NOT NULL AUTO_INCREMENT
+    , competitor_type  ENUM('team', 'player') NOT NULL
+    , team_id          INT
+    , player_id        INT
+    , PRIMARY KEY (competitor_id)
+    , UNIQUE (team_id)
+    , UNIQUE (player_id)
+    , FOREIGN KEY (team_id)   REFERENCES Teams (team_id)
+    , FOREIGN KEY (player_id) REFERENCES Players (player_id)
+    , CHECK (
+          (competitor_type = 'team'
+              AND team_id IS NOT NULL
+              AND player_id IS NULL)
+       OR (competitor_type = 'player'
+              AND player_id IS NOT NULL
+              AND team_id IS NULL)
+      )
+);
+
 CREATE TABLE `Match` (
     match_id        INT           NOT NULL AUTO_INCREMENT
   , tournament_id   INT           NOT NULL
