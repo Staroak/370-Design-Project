@@ -101,7 +101,6 @@ CREATE TABLE Creators (
 );
 
 
-
 -- GROUP 2 ENTITIES WITH FOREIGN KEYS
 
 CREATE TABLE Tournament (
@@ -154,6 +153,7 @@ CREATE TABLE Competitor (
       )
 );
 
+/*
 CREATE TABLE `Match` (
     match_id        INT           NOT NULL AUTO_INCREMENT
   , tournament_id   INT           NOT NULL
@@ -170,6 +170,17 @@ CREATE TABLE `Match` (
   , CHECK (team1_id <> team2_id)
   , CHECK (winner_team_id IS NULL
         OR winner_team_id IN (team1_id, team2_id))
+);
+*/
+
+CREATE TABLE `Match` (
+      match_id        INT       NOT NULL AUTO_INCREMENT
+    , tournament_id   INT       NOT NULL
+    , scheduled_time  DATETIME
+    , final_score     VARCHAR(20)
+    , PRIMARY KEY (match_id)
+    , FOREIGN KEY (tournament_id)
+        REFERENCES Tournament (tournament_id)
 );
 
 CREATE TABLE Contracts (
