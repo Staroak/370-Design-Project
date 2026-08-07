@@ -6,6 +6,7 @@ DROP TABLE IF EXISTS CreatorMatches;
 DROP TABLE IF EXISTS StaffMatches;
 DROP TABLE IF EXISTS CreatorAssignment;
 DROP TABLE IF EXISTS PlayerMatchStats;
+DROP TABLE IF EXISTS MatchParticipant;
 DROP TABLE IF EXISTS StaffAssignments;
 DROP TABLE IF EXISTS Roster;
 DROP TABLE IF EXISTS Registration;
