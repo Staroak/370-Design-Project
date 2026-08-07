@@ -255,6 +255,19 @@ CREATE TABLE Payments (
 
 -- GROUP 3 JUNCTION TABLES (resolve the M:N relationships)
 
+CREATE TABLE MatchParticipant (
+      match_id       INT NOT NULL
+    , competitor_id  INT NOT NULL
+    , placement      INT
+    , points         INT DEFAULT 0
+    , PRIMARY KEY (match_id, competitor_id)
+    , FOREIGN KEY (match_id)
+        REFERENCES `Match` (match_id)
+    , FOREIGN KEY (competitor_id)
+        REFERENCES Competitor (competitor_id)
+    , CHECK (placement IS NULL OR placement > 0)
+    , CHECK (points >= 0)
+);
 
 CREATE TABLE Membership (              -- Users <-> Organization (M:N)
     user_id      INT   NOT NULL
