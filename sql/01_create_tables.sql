@@ -286,8 +286,8 @@ CREATE TABLE Registration (            -- Teams <-> Tournament (M:N)
   , tournament_id      INT   NOT NULL
   , registration_date  DATE
   , seed               INT
-  , PRIMARY KEY (team_id, tournament_id)
-  , FOREIGN KEY (team_id)       REFERENCES Teams (team_id)
+  , PRIMARY KEY (competitor_id, tournament_id)
+  , FOREIGN KEY (competitor_id)       REFERENCES Competitor (competitor_id)
   , FOREIGN KEY (tournament_id) REFERENCES Tournament (tournament_id)
   -- APP/TRIGGER: team and tournament must be for the same game
 );
