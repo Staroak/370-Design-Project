@@ -23,6 +23,19 @@ INSERT INTO Teams (team_name, region, founded_date, game_id, esports_org_id) VAL
   , ('AURAA Farmers', NULL, NULL, 1, NULL)
   , ('Roku Nana', NULL, NULL, 1, NULL);
 
+-- Competitor (each of the 8 real teams enters as a 'team' competitor).
+-- IDs are explicit here because the rest of the file depends on the
+-- competitor_id -> team_id / player_id mapping being readable.
+INSERT INTO Competitor (competitor_id, competitor_type, team_id, player_id) VALUES
+    (1, 'team', 1, NULL)               -- Triple T's Sahurs
+  , (2, 'team', 2, NULL)               -- The Almond Joys
+  , (3, 'team', 3, NULL)               -- Monkey Lovers
+  , (4, 'team', 4, NULL)               -- Elements of Harmony
+  , (5, 'team', 5, NULL)               -- MENAces
+  , (6, 'team', 6, NULL)               -- valorant enjoyers
+  , (7, 'team', 7, NULL)               -- AURAA Farmers
+  , (8, 'team', 8, NULL);              -- Roku Nana
+
 -- Players (real IGNs; real_name/country/birth_date unknown -> NULL)
 INSERT INTO Players (ign, real_name, country, birth_date) VALUES
     ('aus#MTB', NULL, NULL, NULL)
@@ -133,8 +146,9 @@ INSERT INTO Tournament (org_id, game_id, name, start_date, end_date, format, sta
     (1, 1, 'Creator Cup',       '2026-03-14', '2026-03-16', 'Single Elimination', 'completed', 5000.00)
   , (1, 1, 'MTB Winter Clash',  '2026-04-11', '2026-04-12', 'Single Elimination', 'completed', 3000.00);
 
--- Registration (real: all 8 teams -> Creator Cup; top 4 -> Winter Clash)
-INSERT INTO Registration (team_id, tournament_id, registration_date, seed) VALUES
+-- Registration (real: all 8 teams -> Creator Cup; top 4 -> Winter Clash).
+-- competitor_id 1-8 are the 'team' competitors for teams 1-8.
+INSERT INTO Registration (competitor_id, tournament_id, registration_date, seed) VALUES
     (1, 1, '2026-03-01', 1)
   , (2, 1, '2026-03-01', 2)
   , (3, 1, '2026-03-01', 3)
@@ -177,18 +191,33 @@ INSERT INTO StaffAssignments (user_id, tournament_id, staff_role, pay_amount) VA
   , (11, 1, 'moderator', 300.00)
   , (12, 2, 'producer',  400.00);
 
--- Match (mock bracket over the real teams)
-INSERT INTO `Match` (tournament_id, scheduled_time, team1_id, team2_id, winner_team_id, final_score) VALUES
-    (1, '2026-03-14 12:00:00', 1, 8, 1, '13-7')
-  , (1, '2026-03-14 13:30:00', 4, 5, 4, '13-10')
-  , (1, '2026-03-14 15:00:00', 3, 6, 3, '13-4')
-  , (1, '2026-03-14 16:30:00', 2, 7, 2, '13-9')
-  , (1, '2026-03-15 12:00:00', 1, 4, 1, '13-11')
-  , (1, '2026-03-15 14:00:00', 3, 2, 2, '11-13')
-  , (1, '2026-03-16 15:00:00', 1, 2, 1, '13-8')
-  , (2, '2026-04-11 13:00:00', 1, 4, 1, '13-6')
-  , (2, '2026-04-11 15:00:00', 2, 3, 2, '13-9')
-  , (2, '2026-04-12 15:00:00', 1, 2, 2, '9-13');
+-- Match (mock bracket over the real teams). Who played and who won now lives
+-- in MatchParticipant, not in team1_id/team2_id/winner_team_id.
+INSERT INTO `Match` (tournament_id, scheduled_time, final_score) VALUES
+    (1, '2026-03-14 12:00:00', '13-7')      -- match 1  QF
+  , (1, '2026-03-14 13:30:00', '13-10')     -- match 2  QF
+  , (1, '2026-03-14 15:00:00', '13-4')      -- match 3  QF
+  , (1, '2026-03-14 16:30:00', '13-9')      -- match 4  QF
+  , (1, '2026-03-15 12:00:00', '13-11')     -- match 5  SF
+  , (1, '2026-03-15 14:00:00', '11-13')     -- match 6  SF
+  , (1, '2026-03-16 15:00:00', '13-8')      -- match 7  final
+  , (2, '2026-04-11 13:00:00', '13-6')      -- match 8  SF
+  , (2, '2026-04-11 15:00:00', '13-9')      -- match 9  SF
+  , (2, '2026-04-12 15:00:00', '9-13');     -- match 10 final
+
+-- MatchParticipant for the Valorant bracket: 2 competitors per match,
+-- placement 1 = winner / 2 = loser, 1 point for a win in an elimination format.
+INSERT INTO MatchParticipant (match_id, competitor_id, placement, points) VALUES
+    (1,  1, 1, 1), (1,  8, 2, 0)
+  , (2,  4, 1, 1), (2,  5, 2, 0)
+  , (3,  3, 1, 1), (3,  6, 2, 0)
+  , (4,  2, 1, 1), (4,  7, 2, 0)
+  , (5,  1, 1, 1), (5,  4, 2, 0)
+  , (6,  2, 1, 1), (6,  3, 2, 0)
+  , (7,  1, 1, 1), (7,  2, 2, 0)
+  , (8,  1, 1, 1), (8,  4, 2, 0)
+  , (9,  2, 1, 1), (9,  3, 2, 0)
+  , (10, 2, 1, 1), (10, 1, 2, 0);
 
 -- PlayerMatchStats (mock stats for the real players in each match)
 INSERT INTO PlayerMatchStats (player_id, match_id, kills, deaths, assists, score) VALUES
@@ -356,3 +385,89 @@ INSERT INTO Payments (payee_type, staff_user_id, team_id, tournament_id, amount,
   , ('team',  NULL, 2, 2, 2000.00, 'pending', NULL)
   , ('staff', 10,   NULL, 1, 500.00, 'paid',    '2026-03-18')
   , ('staff', 11,   NULL, 1, 300.00, 'pending', NULL);
+
+
+-- ================= SOLO / POINTS-BY-PLACEMENT EVENTS =================
+-- Sprint 3 goal: prove the results model is not limited to 2-team matches.
+-- Two cases are seeded below:
+--   Tournament 3 = an 8-player Teamfight Tactics lobby series (points by placement)
+--   Tournament 4 = a Rocket League 1v1 best-of-3 (one player per side)
+
+-- Games 2 and 3
+INSERT INTO Game (title, genre, publisher) VALUES
+    ('Teamfight Tactics', 'Auto Battler', 'Riot Games')      -- game_id 2
+  , ('Rocket League',     'Sports',       'Psyonix');        -- game_id 3
+
+-- Solo players: 8 TFT entrants (player_id 47-54) + 2 duellists (55-56)
+INSERT INTO Players (ign, real_name, country, birth_date) VALUES
+    ('Setsuko#TFT', NULL, NULL, NULL)          -- 47
+  , ('kiyoomi#EUW', NULL, NULL, NULL)          -- 48
+  , ('Rerolla#NA1', NULL, NULL, NULL)          -- 49
+  , ('Augment#0001', NULL, NULL, NULL)         -- 50
+  , ('TinyLegend#tft', NULL, NULL, NULL)       -- 51
+  , ('Carousel#spin', NULL, NULL, NULL)        -- 52
+  , ('Fortune#4win', NULL, NULL, NULL)         -- 53
+  , ('HyperRoll#top4', NULL, NULL, NULL)       -- 54
+  , ('Jstn1v1#RL', NULL, NULL, NULL)           -- 55
+  , ('Firstkiller#duel', NULL, NULL, NULL);    -- 56
+
+-- The same 10 players enter as 'player' competitors. No Teams row is needed:
+-- this is the case the old team1_id/team2_id schema could not represent.
+INSERT INTO Competitor (competitor_id, competitor_type, team_id, player_id) VALUES
+    (9,  'player', NULL, 47)
+  , (10, 'player', NULL, 48)
+  , (11, 'player', NULL, 49)
+  , (12, 'player', NULL, 50)
+  , (13, 'player', NULL, 51)
+  , (14, 'player', NULL, 52)
+  , (15, 'player', NULL, 53)
+  , (16, 'player', NULL, 54)
+  , (17, 'player', NULL, 55)
+  , (18, 'player', NULL, 56);
+
+INSERT INTO Tournament (org_id, game_id, name, start_date, end_date, format, status, prize_pool) VALUES
+    (1, 2, 'MTB TFT Open',              '2026-05-02', '2026-05-03', 'Points by Placement', 'completed', 2000.00)
+  , (1, 3, 'Rocket League 1v1 Showdown', '2026-05-09', '2026-05-09', 'Single Elimination',  'completed', 1000.00);
+
+-- Registration: 8 solo competitors -> TFT (tournament 3), 2 -> 1v1 (tournament 4)
+INSERT INTO Registration (competitor_id, tournament_id, registration_date, seed) VALUES
+    (9,  3, '2026-04-20', 1)
+  , (10, 3, '2026-04-20', 2)
+  , (11, 3, '2026-04-20', 3)
+  , (12, 3, '2026-04-20', 4)
+  , (13, 3, '2026-04-20', 5)
+  , (14, 3, '2026-04-20', 6)
+  , (15, 3, '2026-04-20', 7)
+  , (16, 3, '2026-04-20', 8)
+  , (17, 4, '2026-05-01', 1)
+  , (18, 4, '2026-05-01', 2);
+
+-- Matches 11-12 = the two TFT lobbies; 13-15 = the 1v1 best-of-3.
+-- final_score is NULL for TFT: a lobby has no single head-to-head scoreline,
+-- the result is the placement of all 8 competitors.
+INSERT INTO `Match` (tournament_id, scheduled_time, final_score) VALUES
+    (3, '2026-05-02 18:00:00', NULL)      -- match 11  TFT lobby 1
+  , (3, '2026-05-03 18:00:00', NULL)      -- match 12  TFT lobby 2
+  , (4, '2026-05-09 12:00:00', '4-2')     -- match 13  1v1 game 1
+  , (4, '2026-05-09 12:30:00', '2-5')     -- match 14  1v1 game 2
+  , (4, '2026-05-09 13:00:00', '3-1');    -- match 15  1v1 game 3 (decider)
+
+-- 8 rows per TFT lobby: placement 1-8, TFT points = 9 - placement.
+INSERT INTO MatchParticipant (match_id, competitor_id, placement, points) VALUES
+    (11,  9, 1, 8), (11, 10, 2, 7), (11, 11, 3, 6), (11, 12, 4, 5)
+  , (11, 13, 5, 4), (11, 14, 6, 3), (11, 15, 7, 2), (11, 16, 8, 1)
+  , (12, 11, 1, 8), (12,  9, 2, 7), (12, 13, 3, 6), (12, 10, 4, 5)
+  , (12, 16, 5, 4), (12, 12, 6, 3), (12, 14, 7, 2), (12, 15, 8, 1);
+
+-- 2 rows per 1v1 game: exactly one player on each side, no team involved.
+INSERT INTO MatchParticipant (match_id, competitor_id, placement, points) VALUES
+    (13, 17, 1, 1), (13, 18, 2, 0)
+  , (14, 18, 1, 1), (14, 17, 2, 0)
+  , (15, 17, 1, 1), (15, 18, 2, 0);
+
+-- Finances for the two new events so the profitability query still covers every tournament
+INSERT INTO Transactions (org_id, tournament_id, type, category, amount, date) VALUES
+    (1, 3, 'revenue', 'sponsorship',  3500.00, '2026-05-01')
+  , (1, 3, 'expense', 'prize payout', 2000.00, '2026-05-04')
+  , (1, 4, 'revenue', 'ticket sales',  900.00, '2026-05-09')
+  , (1, 4, 'expense', 'prize payout', 1000.00, '2026-05-10');

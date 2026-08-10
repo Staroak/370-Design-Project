@@ -281,15 +281,16 @@ CREATE TABLE Membership (              -- Users <-> Organization (M:N)
   , CHECK (left_date IS NULL OR left_date >= joined_date)
 );
 
-CREATE TABLE Registration (            -- Teams <-> Tournament (M:N)
-    team_id            INT   NOT NULL
+CREATE TABLE Registration (            -- Competitor <-> Tournament (M:N)
+    competitor_id      INT   NOT NULL
   , tournament_id      INT   NOT NULL
   , registration_date  DATE
   , seed               INT
   , PRIMARY KEY (competitor_id, tournament_id)
-  , FOREIGN KEY (competitor_id)       REFERENCES Competitor (competitor_id)
+  , FOREIGN KEY (competitor_id) REFERENCES Competitor (competitor_id)
   , FOREIGN KEY (tournament_id) REFERENCES Tournament (tournament_id)
-  -- APP/TRIGGER: team and tournament must be for the same game
+  -- APP/TRIGGER: for a 'team' competitor, Teams.game_id must match the
+  -- tournament's game_id; a 'player' competitor carries no game of its own
 );
 
 CREATE TABLE Roster (                  -- Players <-> Teams (M:N), with surrogate PK

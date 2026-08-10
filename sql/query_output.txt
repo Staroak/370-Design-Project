@@ -1,4 +1,4 @@
-﻿--------------
+--------------
 -- =====================================================================
 --------------
 
@@ -22,12 +22,14 @@ FROM Tournament t
 ORDER BY profit DESC
 --------------
 
-+---------------+------------------+---------------+---------------+---------+
-| tournament_id | name             | total_revenue | total_expense | profit  |
-+---------------+------------------+---------------+---------------+---------+
-|             1 | Creator Cup      |       9500.00 |       8200.00 | 1300.00 |
-|             2 | MTB Winter Clash |       2500.00 |       3000.00 | -500.00 |
-+---------------+------------------+---------------+---------------+---------+
++---------------+----------------------------+---------------+---------------+---------+
+| tournament_id | name                       | total_revenue | total_expense | profit  |
++---------------+----------------------------+---------------+---------------+---------+
+|             3 | MTB TFT Open               |       3500.00 |       2000.00 | 1500.00 |
+|             1 | Creator Cup                |       9500.00 |       8200.00 | 1300.00 |
+|             4 | Rocket League 1v1 Showdown |        900.00 |       1000.00 | -100.00 |
+|             2 | MTB Winter Clash           |       2500.00 |       3000.00 | -500.00 |
++---------------+----------------------------+---------------+---------------+---------+
 --------------
 -- Q2: Which creators are in event #1?
 --------------
@@ -51,28 +53,39 @@ WHERE ca.tournament_id = 1
 |          2 | NULL             | instagram.com/almondfps | NULL    | host     |
 +------------+------------------+-------------------------+---------+----------+
 --------------
--- Q3: How many teams are participating in each tournament?
+-- Q3: How many competitors are participating in each tournament?
+--------------
+
+--------------
+-- (a competitor is a team OR a solo player, so this counts both kinds of event)
 --------------
 
 --------------
 SELECT
     t.tournament_id
   , t.name
-  , COUNT(r.team_id) AS teams_registered
+  , t.format
+  , COUNT(r.competitor_id) AS competitors_registered
 FROM Tournament t
 LEFT JOIN Registration r ON r.tournament_id = t.tournament_id
-GROUP BY t.tournament_id, t.name
-ORDER BY teams_registered DESC
+GROUP BY t.tournament_id, t.name, t.format
+ORDER BY competitors_registered DESC
 --------------
 
-+---------------+------------------+------------------+
-| tournament_id | name             | teams_registered |
-+---------------+------------------+------------------+
-|             1 | Creator Cup      |                8 |
-|             2 | MTB Winter Clash |                4 |
-+---------------+------------------+------------------+
++---------------+----------------------------+---------------------+------------------------+
+| tournament_id | name                       | format              | competitors_registered |
++---------------+----------------------------+---------------------+------------------------+
+|             1 | Creator Cup                | Single Elimination  |                      8 |
+|             3 | MTB TFT Open               | Points by Placement |                      8 |
+|             2 | MTB Winter Clash           | Single Elimination  |                      4 |
+|             4 | Rocket League 1v1 Showdown | Single Elimination  |                      2 |
++---------------+----------------------------+---------------------+------------------------+
 --------------
 -- Q4: What organizations (esports orgs) are present in tournament #1?
+--------------
+
+--------------
+-- Now goes through Competitor, since a registration is no longer a team directly.
 --------------
 
 --------------
@@ -80,7 +93,8 @@ SELECT DISTINCT
     eo.esports_org_id
   , eo.name
 FROM Registration r
-JOIN Teams tm      ON tm.team_id = r.team_id
+JOIN Competitor c  ON c.competitor_id = r.competitor_id
+JOIN Teams tm      ON tm.team_id = c.team_id
 JOIN EsportsOrg eo ON eo.esports_org_id = tm.esports_org_id
 WHERE r.tournament_id = 1
 --------------
@@ -92,7 +106,7 @@ WHERE r.tournament_id = 1
 |              2 | QOR  |
 +----------------+------+
 --------------
--- Q5: Which game is being played for tournament #5?
+-- Q5: Which game is being played for tournament #3?
 --------------
 
 --------------
@@ -102,9 +116,14 @@ SELECT
   , g.title AS game
 FROM Tournament t
 JOIN Game g ON g.game_id = t.game_id
-WHERE t.tournament_id = 5
+WHERE t.tournament_id = 3
 --------------
 
++---------------+--------------+-------------------+
+| tournament_id | name         | game              |
++---------------+--------------+-------------------+
+|             3 | MTB TFT Open | Teamfight Tactics |
++---------------+--------------+-------------------+
 --------------
 -- Q6: Who are the top players in each game title? (by total kills, top listed first)
 --------------
@@ -134,30 +153,49 @@ LIMIT 5
 | Valorant | Sleepy Femboy#rawr     |          95 |
 +----------+------------------------+-------------+
 --------------
--- Q7: Which teams won the most tournaments? (champion = winner of the final match)
+-- Q7: Who won the most tournaments? (champion = placement 1 in the final match)
+--------------
+
+--------------
+-- Restricted to bracket formats: in a points-by-placement event the champion is
+--------------
+
+--------------
+-- decided on total points, not by the last lobby -- that case is Q14.
+--------------
+
+--------------
+-- The COALESCE means one query covers team champions and solo champions.
 --------------
 
 --------------
 SELECT
-    tm.team_name
+    COALESCE(tm.team_name, pl.ign) AS champion
+  , c.competitor_type
   , COUNT(*) AS tournaments_won
 FROM `Match` m
-JOIN Teams tm ON tm.team_id = m.winner_team_id
-WHERE m.scheduled_time = (
-    SELECT MAX(m2.scheduled_time)
-    FROM `Match` m2
-    WHERE m2.tournament_id = m.tournament_id
-)
-GROUP BY tm.team_id, tm.team_name
-ORDER BY tournaments_won DESC
+JOIN Tournament t         ON t.tournament_id = m.tournament_id
+JOIN MatchParticipant mp  ON mp.match_id = m.match_id AND mp.placement = 1
+JOIN Competitor c         ON c.competitor_id = mp.competitor_id
+LEFT JOIN Teams tm        ON tm.team_id   = c.team_id
+LEFT JOIN Players pl      ON pl.player_id = c.player_id
+WHERE t.format = 'Single Elimination'
+  AND m.scheduled_time = (
+      SELECT MAX(m2.scheduled_time)
+      FROM `Match` m2
+      WHERE m2.tournament_id = m.tournament_id
+  )
+GROUP BY c.competitor_id, c.competitor_type, tm.team_name, pl.ign
+ORDER BY tournaments_won DESC, champion
 --------------
 
-+-------------------+-----------------+
-| team_name         | tournaments_won |
-+-------------------+-----------------+
-| Triple T's Sahurs |               1 |
-| The Almond Joys   |               1 |
-+-------------------+-----------------+
++-------------------+-----------------+-----------------+
+| champion          | competitor_type | tournaments_won |
++-------------------+-----------------+-----------------+
+| Jstn1v1#RL        | player          |               1 |
+| The Almond Joys   | team            |               1 |
+| Triple T's Sahurs | team            |               1 |
++-------------------+-----------------+-----------------+
 --------------
 -- Q8: Who is still owed money? (staff and teams with unpaid status)
 --------------
@@ -281,3 +319,154 @@ ORDER BY total_spend DESC
 | Logitech     |     3000.00 |                  2 |                      1 |
 | Discord      |     2500.00 |                  1 |                      1 |
 +--------------+-------------+--------------------+------------------------+
+--------------
+-- =====================================================================
+--------------
+
+--------------
+-- GENERALIZED RESULTS MODEL (Sprint 3 goal)
+--------------
+
+--------------
+-- Q13-Q15 are the evidence that the results model is no longer limited to
+--------------
+
+--------------
+-- two teams per match. All three read the same MatchParticipant relation.
+--------------
+
+--------------
+-- =====================================================================
+--------------
+
+--------------
+-- Q13: FINAL STANDINGS for every tournament, whatever its format or size.
+--------------
+
+--------------
+-- This is the success criterion: one query returns the standings of an
+--------------
+
+--------------
+-- 8-team Valorant bracket, an 8-player TFT lobby series, and a 1v1 duel,
+--------------
+
+--------------
+-- because "who competed and how they placed" is now rows, not columns.
+--------------
+
+--------------
+-- Ties are broken by the competitor's best single-match placement.
+--------------
+
+--------------
+SELECT
+    t.tournament_id
+  , t.name   AS tournament
+  , t.format
+  , RANK() OVER (PARTITION BY t.tournament_id
+                 ORDER BY SUM(mp.points) DESC, MIN(mp.placement) ASC) AS standing
+  , COALESCE(tm.team_name, pl.ign) AS competitor
+  , c.competitor_type
+  , COUNT(*)          AS matches_played
+  , SUM(mp.points)    AS total_points
+  , MIN(mp.placement) AS best_placement
+FROM MatchParticipant mp
+JOIN `Match` m       ON m.match_id      = mp.match_id
+JOIN Tournament t    ON t.tournament_id = m.tournament_id
+JOIN Competitor c    ON c.competitor_id = mp.competitor_id
+LEFT JOIN Teams tm   ON tm.team_id   = c.team_id
+LEFT JOIN Players pl ON pl.player_id = c.player_id
+GROUP BY t.tournament_id, t.name, t.format
+       , c.competitor_id, c.competitor_type, tm.team_name, pl.ign
+ORDER BY t.tournament_id, SUM(mp.points) DESC, MIN(mp.placement) ASC
+--------------
+
++---------------+----------------------------+---------------------+----------+---------------------+-----------------+----------------+--------------+----------------+
+| tournament_id | tournament                 | format              | standing | competitor          | competitor_type | matches_played | total_points | best_placement |
++---------------+----------------------------+---------------------+----------+---------------------+-----------------+----------------+--------------+----------------+
+|             1 | Creator Cup                | Single Elimination  |        1 | Triple T's Sahurs   | team            |              3 |            3 |              1 |
+|             1 | Creator Cup                | Single Elimination  |        2 | The Almond Joys     | team            |              3 |            2 |              1 |
+|             1 | Creator Cup                | Single Elimination  |        3 | Elements of Harmony | team            |              2 |            1 |              1 |
+|             1 | Creator Cup                | Single Elimination  |        3 | Monkey Lovers       | team            |              2 |            1 |              1 |
+|             1 | Creator Cup                | Single Elimination  |        5 | Roku Nana           | team            |              1 |            0 |              2 |
+|             1 | Creator Cup                | Single Elimination  |        5 | MENAces             | team            |              1 |            0 |              2 |
+|             1 | Creator Cup                | Single Elimination  |        5 | valorant enjoyers   | team            |              1 |            0 |              2 |
+|             1 | Creator Cup                | Single Elimination  |        5 | AURAA Farmers       | team            |              1 |            0 |              2 |
+|             2 | MTB Winter Clash           | Single Elimination  |        1 | The Almond Joys     | team            |              2 |            2 |              1 |
+|             2 | MTB Winter Clash           | Single Elimination  |        2 | Triple T's Sahurs   | team            |              2 |            1 |              1 |
+|             2 | MTB Winter Clash           | Single Elimination  |        3 | Elements of Harmony | team            |              1 |            0 |              2 |
+|             2 | MTB Winter Clash           | Single Elimination  |        3 | Monkey Lovers       | team            |              1 |            0 |              2 |
+|             3 | MTB TFT Open               | Points by Placement |        1 | Setsuko#TFT         | player          |              2 |           15 |              1 |
+|             3 | MTB TFT Open               | Points by Placement |        2 | Rerolla#NA1         | player          |              2 |           14 |              1 |
+|             3 | MTB TFT Open               | Points by Placement |        3 | kiyoomi#EUW         | player          |              2 |           12 |              2 |
+|             3 | MTB TFT Open               | Points by Placement |        4 | TinyLegend#tft      | player          |              2 |           10 |              3 |
+|             3 | MTB TFT Open               | Points by Placement |        5 | Augment#0001        | player          |              2 |            8 |              4 |
+|             3 | MTB TFT Open               | Points by Placement |        6 | HyperRoll#top4      | player          |              2 |            5 |              5 |
+|             3 | MTB TFT Open               | Points by Placement |        7 | Carousel#spin       | player          |              2 |            5 |              6 |
+|             3 | MTB TFT Open               | Points by Placement |        8 | Fortune#4win        | player          |              2 |            3 |              7 |
+|             4 | Rocket League 1v1 Showdown | Single Elimination  |        1 | Jstn1v1#RL          | player          |              3 |            2 |              1 |
+|             4 | Rocket League 1v1 Showdown | Single Elimination  |        2 | Firstkiller#duel    | player          |              3 |            1 |              1 |
++---------------+----------------------------+---------------------+----------+---------------------+-----------------+----------------+--------------+----------------+
+--------------
+-- Q14: The 8-player TFT lobby, exactly as stored (match 11).
+--------------
+
+--------------
+-- Eight competitors in ONE match -- impossible under team1_id/team2_id.
+--------------
+
+--------------
+SELECT
+    m.match_id
+  , m.scheduled_time
+  , mp.placement
+  , pl.ign AS player
+  , mp.points
+FROM MatchParticipant mp
+JOIN `Match` m   ON m.match_id = mp.match_id
+JOIN Competitor c ON c.competitor_id = mp.competitor_id
+JOIN Players pl   ON pl.player_id = c.player_id
+WHERE m.match_id = 11
+ORDER BY mp.placement
+--------------
+
++----------+---------------------+-----------+----------------+--------+
+| match_id | scheduled_time      | placement | player         | points |
++----------+---------------------+-----------+----------------+--------+
+|       11 | 2026-05-02 18:00:00 |         1 | Setsuko#TFT    |      8 |
+|       11 | 2026-05-02 18:00:00 |         2 | kiyoomi#EUW    |      7 |
+|       11 | 2026-05-02 18:00:00 |         3 | Rerolla#NA1    |      6 |
+|       11 | 2026-05-02 18:00:00 |         4 | Augment#0001   |      5 |
+|       11 | 2026-05-02 18:00:00 |         5 | TinyLegend#tft |      4 |
+|       11 | 2026-05-02 18:00:00 |         6 | Carousel#spin  |      3 |
+|       11 | 2026-05-02 18:00:00 |         7 | Fortune#4win   |      2 |
+|       11 | 2026-05-02 18:00:00 |         8 | HyperRoll#top4 |      1 |
++----------+---------------------+-----------+----------------+--------+
+--------------
+-- Q15: The Rocket League 1v1 series -- one player per side, no team rows at all.
+--------------
+
+--------------
+SELECT
+    m.match_id
+  , m.scheduled_time
+  , m.final_score
+  , MAX(CASE WHEN mp.placement = 1 THEN pl.ign END) AS winner
+  , MAX(CASE WHEN mp.placement = 2 THEN pl.ign END) AS loser
+FROM `Match` m
+JOIN MatchParticipant mp ON mp.match_id = m.match_id
+JOIN Competitor c        ON c.competitor_id = mp.competitor_id
+JOIN Players pl          ON pl.player_id = c.player_id
+WHERE m.tournament_id = 4
+GROUP BY m.match_id, m.scheduled_time, m.final_score
+ORDER BY m.scheduled_time
+--------------
+
++----------+---------------------+-------------+------------------+------------------+
+| match_id | scheduled_time      | final_score | winner           | loser            |
++----------+---------------------+-------------+------------------+------------------+
+|       13 | 2026-05-09 12:00:00 | 4-2         | Jstn1v1#RL       | Firstkiller#duel |
+|       14 | 2026-05-09 12:30:00 | 2-5         | Firstkiller#duel | Jstn1v1#RL       |
+|       15 | 2026-05-09 13:00:00 | 3-1         | Jstn1v1#RL       | Firstkiller#duel |
++----------+---------------------+-------------+------------------+------------------+
