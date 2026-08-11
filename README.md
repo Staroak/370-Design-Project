@@ -321,5 +321,12 @@ Deliverable: replace the fixed team1_id/team2_id/winner_team_id columns with a M
 | 15 | `v_my_contract_deliverables` | sponsor     | own contract value + fulfilment                        | every other sponsor          | row              | Q11    |
 | 16 | `v_my_creator_assignments`   | creator     | own rate, status, streams                              | other creators' rates        | row              | -      |
 
+## Sprint 4 Plan
+
+- Determine if our design / different transactions violate any ACID properties
+- Determine any subsets within our ERD as well as strong and weak entity sets
+- Making sure our current ERD satisfies all aspects of a good conceptual design. 
+
+- Success Criteria: We would be able to identify and fix all violations in our database design resulting in no ACID properties violated. Have correct subsets implemented as well as having new strong and weak entity sets along with foreign keys and primary keys. Our new ERD would satisfy all aspects of a good conceptual design (correctness, completeness, minimality, expressiveness, readability, self-explanation, extensibility, and normality) with no underlying problems.
 
 
