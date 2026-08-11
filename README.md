@@ -1,4 +1,24 @@
-#    Project Schedule
+# CSC370 Design Project: Esports Tournament Database
+
+A database for organizing creator tournaments and esports events: tournaments, sponsorship
+contracts, deliverables, finances, and prize payouts, shared by multiple tournament
+organizers with each org's data isolated.
+
+## Contents
+
+- [Project Schedule](#project-schedule)
+- [Project](#project)
+- [Files in This Repo](#files-in-this-repo)
+- [Initial Functional requirements list:](#initial-functional-requirements-list)
+- [Business Requirements:](#business-requirements)
+- **Sprint 0**: [Plan](#plan-for-sprint-0)
+- **Sprint 1**: [Plan](#plan-for-sprint-1) · [Status Report](#status-report-for-sprint-1)
+  - [Conceptual Design](#conceptual-design): [Entities](#entities) · [Relationships](#relationships-junction-tables-multiplicity)
+- **Sprint 2**: [Plan](#plan-for-sprint-2) · [Status Report](#status-report-for-sprint-2)
+- **Sprint 3**: [Plan](#plan-for-sprint-3) · [Status](#sprint-3-status) · [View catalogue](#view-catalogue)
+- **Sprint 4**: [Plan](#sprint-4-plan)
+
+## Project Schedule
 
 - Sprint No. Working Period Weight Due Date
 - Project Kick-off 6 July 2026 - 17 July 2026 0% 17 July 2026 11:59 pm
@@ -8,12 +28,27 @@
 - Sprint 4 8 August 2026 - 14 August 2026 20% 14 August 2026 11:59 pm
 - Sprint 5 15 August 2026 - 21 August 2026 20% 21 August 2026 11:59 pm
 
-Project:
+## Project
+
 Creating a database that helps organize creator tournaments for online games and esports. Handles and tracks tournaments, tournament details (time and date), sponsorship contracts, deliverables, finances (revenue/expenses), and prize payouts. 
+
+## Files in This Repo
+
+| File | What it is |
+|------|------------|
+| [ERD.pdf](ERD.pdf) | Conceptual design (Chen notation) |
+| [sql/01_create_tables.sql](sql/01_create_tables.sql) | Schema: tables, keys, CHECK constraints, APP/TRIGGER notes |
+| [sql/02_insert_data.sql](sql/02_insert_data.sql) | Mock data |
+| [sql/03_test_queries.sql](sql/03_test_queries.sql) | Business-requirement queries Q1 to Q13, with [output](sql/query_output.txt) |
+| [sql/04_views.sql](sql/04_views.sql) | The 16 role views ([catalogue below](#view-catalogue)) |
+| [sql/05_roles_and_grants.sql](sql/05_roles_and_grants.sql) | 8 roles, 11 accounts, grants |
+| [sql/06_permission_tests.sql](sql/06_permission_tests.sql) | ALLOW/DENY evidence, with [output](sql/permission_test_output.txt) |
+| [sql/run_permission_tests.sh](sql/run_permission_tests.sh) | Rebuilds the DB and replays every test |
+| [mock-data/](mock-data/) | Source spreadsheets the mock data came from |
 
 ## Initial Functional requirements list:
 
-# What tourney organizers would want to see:
+### What tourney organizers would want to see:
 
 - Add users to organizations / teams with role
 - Create tournaments per organization, with games, dates, formatting, status, prize pool
@@ -33,7 +68,7 @@ Creating a database that helps organize creator tournaments for online games and
 - Roles: Admin, staff, esports organization, players/teams, audience (security hierarchy, most to least)
 - Track payment logs of each staff (crew/casters/mods) member / winning teams
 
-# What the players/team/audience would want to see:
+### What the players/team/audience would want to see:
 
 - Audience can also access database to check for information regarding the event
 - Players and team stats
@@ -54,7 +89,7 @@ Creating a database that helps organize creator tournaments for online games and
 
 Note* Data will be generated as realistic mock data. Can scrape liquidpedia and existing TO company data (if they let us)
 
-# Plan for Sprint 0:
+## Plan for Sprint 0:
 
 - Form group and scope out the idea
 - Discuss ideas with group members and create functional requirements list
@@ -69,11 +104,11 @@ Note* Data will be generated as realistic mock data. Can scrape liquidpedia and 
 - Identify and develop contraints
 
 
-# Status Report for Sprint 1
+## Status Report for Sprint 1
 
-## Conceptual Design
+### Conceptual Design
 
-### Entities
+#### Entities
 
 **Organization**
 - Attributes: org_id(PK), org_name, contact_email, created_date, region
@@ -189,7 +224,7 @@ Note* Data will be generated as realistic mock data. Can scrape liquidpedia and 
     - payee_type = staff -> staff_user_id filled, team_id null
     - payee_type = team -> team_id filled, staff_user_id null
 
-### Relationships (junction tables: multiplicity)
+#### Relationships (junction tables: multiplicity)
 
 **Membership** - Users <-> Organization (M:N)
 - Attributes: user_id(FK), org_id(FK), role, joined_date, left_date; PK {user_id, org_id}
@@ -301,6 +336,10 @@ Deliverable: replace the fixed team1_id/team2_id/winner_team_id columns with a M
 
 - Wrote run_permission_test.sh which rebuilds the db and applies the views and grants. 
 
+
+### View catalogue
+
+Definitions in [sql/04_views.sql](sql/04_views.sql), grants in [sql/05_roles_and_grants.sql](sql/05_roles_and_grants.sql), ALLOW/DENY evidence in [sql/06_permission_tests.sql](sql/06_permission_tests.sql).
 
 | #  | View                         | Role        | Exposes                                                | Deliberately hides           | Mechanism        | Source |
 |----|------------------------------|-------------|--------------------------------------------------------|------------------------------|------------------|--------|
