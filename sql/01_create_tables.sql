@@ -31,6 +31,14 @@ DROP TABLE IF EXISTS Organization;
 
 -- GROUP 1 INDEPENDENT ENTITIES (no outgoing foreign keys)
 
+-- NOTE ON db_username (added Sprint 3/4, for access control):
+-- Five entity sets below carry a db_username column. It maps a row in OUR data
+-- to a MySQL account name, which is what lets a view filter itself with
+-- CURRENT_USER() and give each logged-in principal only their own rows
+-- (row-level security -- see 04_views.sql). It is NOT application login data:
+-- Users.password is app-level auth and is unrelated to MySQL authentication.
+-- NULL means that row has no database account, which is the normal case.
+
 
 CREATE TABLE Organization (            -- tournament organizer (uses the service)
     org_id         INT           NOT NULL AUTO_INCREMENT
@@ -46,18 +54,22 @@ CREATE TABLE EsportsOrg (              -- a team's parent org, e.g. TSM, Cloud9
   , name            VARCHAR(255)  NOT NULL
   , region          VARCHAR(100)
   , founded_date    DATE
+  , db_username     VARCHAR(64)
   , PRIMARY KEY (esports_org_id)
   , UNIQUE (name)
+  , UNIQUE (db_username)
 );
 
 CREATE TABLE Users (
-    user_id    INT           NOT NULL AUTO_INCREMENT
-  , full_name  VARCHAR(255)  NOT NULL
-  , email      VARCHAR(255)  NOT NULL
-  , password   VARCHAR(255)  NOT NULL
-  , phone      VARCHAR(30)
+    user_id      INT           NOT NULL AUTO_INCREMENT
+  , full_name    VARCHAR(255)  NOT NULL
+  , email        VARCHAR(255)  NOT NULL
+  , password     VARCHAR(255)  NOT NULL   -- application auth only, never granted below role_admin
+  , phone        VARCHAR(30)
+  , db_username  VARCHAR(64)
   , PRIMARY KEY (user_id)
   , UNIQUE (email)
+  , UNIQUE (db_username)
 );
 
 CREATE TABLE Game (
@@ -70,13 +82,15 @@ CREATE TABLE Game (
 );
 
 CREATE TABLE Players (
-    player_id   INT           NOT NULL AUTO_INCREMENT
-  , ign         VARCHAR(100)  NOT NULL
-  , real_name   VARCHAR(255)
-  , country     VARCHAR(100)
-  , birth_date  DATE
+    player_id    INT           NOT NULL AUTO_INCREMENT
+  , ign          VARCHAR(100)  NOT NULL
+  , real_name    VARCHAR(255)
+  , country      VARCHAR(100)
+  , birth_date   DATE
+  , db_username  VARCHAR(64)
   , PRIMARY KEY (player_id)
   , UNIQUE (ign)
+  , UNIQUE (db_username)
 );
 
 CREATE TABLE Sponsors (
@@ -84,8 +98,10 @@ CREATE TABLE Sponsors (
   , company_name   VARCHAR(255)  NOT NULL
   , contact_name   VARCHAR(255)
   , contact_email  VARCHAR(255)
+  , db_username    VARCHAR(64)
   , PRIMARY KEY (sponsor_id)
   , UNIQUE (company_name)
+  , UNIQUE (db_username)
 );
 
 CREATE TABLE Creators (
@@ -94,7 +110,9 @@ CREATE TABLE Creators (
   , instagram    VARCHAR(255)
   , twitter      VARCHAR(255)
   , profile_pic  VARCHAR(255)
+  , db_username  VARCHAR(64)
   , PRIMARY KEY (creator_id)
+  , UNIQUE (db_username)
   , CHECK (twitchlink IS NOT NULL
         OR instagram  IS NOT NULL
         OR twitter    IS NOT NULL)

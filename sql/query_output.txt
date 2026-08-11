@@ -215,12 +215,13 @@ WHERE p.status <> 'paid'
 ORDER BY amount DESC
 --------------
 
-+------------+-----------------+------------------+---------+---------+
-| payee_type | payee           | tournament       | amount  | status  |
-+------------+-----------------+------------------+---------+---------+
-| team       | The Almond Joys | MTB Winter Clash | 2000.00 | pending |
-| staff      | Lead Moderator  | Creator Cup      |  300.00 | pending |
-+------------+-----------------+------------------+---------+---------+
++------------+---------------------+------------------+---------+---------+
+| payee_type | payee               | tournament       | amount  | status  |
++------------+---------------------+------------------+---------+---------+
+| team       | The Almond Joys     | MTB Winter Clash | 2000.00 | pending |
+| team       | Elements of Harmony | MTB Winter Clash | 1000.00 | pending |
+| staff      | Lead Moderator      | Creator Cup      |  300.00 | pending |
++------------+---------------------+------------------+---------+---------+
 --------------
 -- Q9: Which players have the highest and lowest K/D ratio? (highest first, lowest last)
 --------------
@@ -286,8 +287,7 @@ ORDER BY s.company_name, d.status
 | company_name | status    | num_deliverables |
 +--------------+-----------+------------------+
 | Discord      | fulfilled |                1 |
-| Logitech     | fulfilled |                1 |
-| Logitech     | pending   |                1 |
+| Logitech     | fulfilled |                2 |
 | Red Bull     | fulfilled |                2 |
 +--------------+-----------+------------------+
 --------------
@@ -316,7 +316,7 @@ ORDER BY total_spend DESC
 | company_name | total_spend | deliverables_total | deliverables_fulfilled |
 +--------------+-------------+--------------------+------------------------+
 | Red Bull     |     5000.00 |                  2 |                      2 |
-| Logitech     |     3000.00 |                  2 |                      1 |
+| Logitech     |     3000.00 |                  2 |                      2 |
 | Discord      |     2500.00 |                  1 |                      1 |
 +--------------+-------------+--------------------+------------------------+
 --------------

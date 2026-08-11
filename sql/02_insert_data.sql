@@ -471,3 +471,30 @@ INSERT INTO Transactions (org_id, tournament_id, type, category, amount, date) V
   , (1, 3, 'expense', 'prize payout', 2000.00, '2026-05-04')
   , (1, 4, 'revenue', 'ticket sales',  900.00, '2026-05-09')
   , (1, 4, 'expense', 'prize payout', 1000.00, '2026-05-10');
+
+
+-- ================= ACCESS-CONTROL IDENTITY MAPPING ===================
+-- Links a row in our data to a MySQL account name
+
+
+-- Mock salaries. Roster.salary was left NULL above because the real Creator Cup
+-- data has none, but the access-control demo needs visible values: salary is the
+-- column that v_public_rosters hides and v_my_profile exposes, and a hidden NULL
+-- proves nothing. Starters (jersey 1-5) earn more than subs.
+UPDATE Roster
+SET salary = CASE WHEN jersey_number <= 5 THEN 1200.00 ELSE 600.00 END
+           + (team_id * 50.00);
+
+-- Prize payouts for a QOR team (team 4, Elements of Harmony) so the
+-- esports-org tier has rows of its own to see. Totals still reconcile with the
+-- 'prize payout' expenses in Transactions: tournament 1 = 5000, tournament 2 = 3000.
+INSERT INTO Payments (payee_type, staff_user_id, team_id, tournament_id, amount, status, payment_date) VALUES
+    ('team', NULL, 4, 1,  500.00, 'paid',    '2026-03-18')
+  , ('team', NULL, 4, 2, 1000.00, 'pending', NULL);
+
+UPDATE Users      SET db_username = 'admin_mtb'       WHERE email = 'admin@mtbevents.gg';
+UPDATE Users      SET db_username = 'staff_caster'    WHERE email = 'caster@mtbevents.gg';
+UPDATE Players    SET db_username = 'player_aus'      WHERE ign = 'aus#MTB';
+UPDATE EsportsOrg SET db_username = 'org_qor'         WHERE name = 'QOR';
+UPDATE Sponsors   SET db_username = 'sponsor_redbull' WHERE company_name = 'Red Bull';
+UPDATE Creators   SET db_username = 'creator_revrzd'  WHERE creator_id = 1;

@@ -287,3 +287,28 @@ Deliverable: replace the fixed team1_id/team2_id/winner_team_id columns with a M
 - Develop user access levels and granting access permissions. 
 - Create different view queries with different grant levels.
 
+## Spring 3 Status
+
+- Created View tables for roles
+
+
+| #  | View                         | Role        | Exposes                                                | Deliberately hides           | Mechanism        | Source |
+|----|------------------------------|-------------|--------------------------------------------------------|------------------------------|------------------|--------|
+| 1  | `v_public_schedule`          | audience    | tournament, game, organizer, dates, format, prize_pool | `Organization.contact_email` | column           | -      |
+| 2  | `v_public_standings`         | audience    | standings for any format or competitor count           | -                            | -                | Q13    |
+| 3  | `v_public_rosters`           | audience    | team_name, ign, jersey_number                          | `Roster.salary`              | column           | -      |
+| 4  | `v_public_player_stats`      | audience    | kills/deaths/assists, K/D per game                     | -                            | -                | Q6/Q9  |
+| 5  | `v_my_profile`               | player      | own profile **+ salary**                               | everyone else's rows         | row              | -      |
+| 6  | `v_my_match_history`         | player      | own per-match stats                                    | others' stats                | row              | -      |
+| 7  | `v_my_team_payouts`          | esports_org | own teams' prize payouts                               | other orgs' payouts          | row              | -      |
+| 8  | `v_tournament_ops`           | staff       | competitors, casters, mods per match                   | -                            | -                | -      |
+| 9  | `v_deliverable_status`       | staff       | description, due_date, status, clicks                  | `Contracts.total_value`      | column           | Q11    |
+| 10 | `v_registration_violations`  | staff       | cross-game registrations                               | -                            | integrity report | -      |
+| 11 | `v_match_integrity`          | staff       | bad participant counts / dup placements                | -                            | integrity report | -      |
+| 12 | `v_org_financials`           | admin       | revenue/expense/profit, own org                        | other orgs' money            | row              | Q1     |
+| 13 | `v_outstanding_payments`     | admin       | unpaid staff + teams, own org                          | other orgs' payables         | row              | Q8     |
+| 14 | `v_org_membership`           | admin       | full_name, email, role                                 | `Users.password`             | column+row       | Q10    |
+| 15 | `v_my_contract_deliverables` | sponsor     | own contract value + fulfilment                        | every other sponsor          | row              | Q11    |
+| 16 | `v_my_creator_assignments`   | creator     | own rate, status, streams                              | other creators' rates        | row              | -      |
+
+
