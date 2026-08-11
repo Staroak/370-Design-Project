@@ -287,9 +287,19 @@ Deliverable: replace the fixed team1_id/team2_id/winner_team_id columns with a M
 - Develop user access levels and granting access permissions. 
 - Create different view queries with different grant levels.
 
-## Spring 3 Status
+## Sprint 3 Status
 
-- Created View tables for roles
+- Problem we identified: 
+- Our Sprint 3 schema changes didn't fully run. The registration table had old team_id column, but the PK and FK pointed at competitor_id. 
+
+- Added competitor entity so a competitor can be either a team or a single player. Lets us store solo events. Can now determine team_id and player_id
+
+
+- Created 16 View tables for roles
+- Created 8 roles and 11 accounts, and granted on views instead of base tables. 
+- Build row-level security out of views, so two adminds from different orgs can run the same query and get different rows. 
+
+- Wrote run_permission_test.sh which rebuilds the db and applies the views and grants. 
 
 
 | #  | View                         | Role        | Exposes                                                | Deliberately hides           | Mechanism        | Source |
@@ -310,5 +320,6 @@ Deliverable: replace the fixed team1_id/team2_id/winner_team_id columns with a M
 | 14 | `v_org_membership`           | admin       | full_name, email, role                                 | `Users.password`             | column+row       | Q10    |
 | 15 | `v_my_contract_deliverables` | sponsor     | own contract value + fulfilment                        | every other sponsor          | row              | Q11    |
 | 16 | `v_my_creator_assignments`   | creator     | own rate, status, streams                              | other creators' rates        | row              | -      |
+
 
 

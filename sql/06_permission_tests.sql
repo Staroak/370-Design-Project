@@ -1,15 +1,10 @@
 -- =====================================================================
--- 06_permission_tests.sql   -- evidence that the grants actually bind
+-- 06_permission_tests.sql    evidence that the grants actually bind
 --
 -- This file is NOT run as root. Each block runs as a different account, so
 -- replay it with the command shown above each section. The captured results are
 -- in permission_test_output.txt, produced by:
 --     bash run_permission_tests.sh
---
--- READ THIS WHEN MARKING: the DENIALS are the evidence. A query that succeeds
--- only proves the grant is wide enough. Only a rejection proves it is tight
--- enough. Every block below therefore pairs an ALLOW with a DENY on the same
--- underlying data.
 --
 -- Password for every demo account: Csc370demo!
 -- =====================================================================
@@ -187,11 +182,6 @@ SELECT COUNT(*) AS user_rows FROM Users;
 -- =====================================================================
 -- TEST 9 -- THE GRANT CATALOGUE
 -- mysql -u root -p design_project_370
---
--- Access control is not stored in a table of ours; MySQL keeps it in the
--- `mysql` system database. SHOW GRANTS reads it back, and is a complete,
--- machine-readable answer to "who can see salaries?" -- which grepping an
--- application codebase for authorization checks is not.
 -- =====================================================================
 
 SHOW GRANTS FOR 'role_audience';
