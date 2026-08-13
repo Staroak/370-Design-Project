@@ -16,8 +16,9 @@ organizers with each org's data isolated.
   - [Conceptual Design](#conceptual-design): [Entities](#entities) · [Relationships](#relationships-junction-tables-multiplicity)
 - **Sprint 2**: [Plan](#plan-for-sprint-2) · [Status Report](#status-report-for-sprint-2)
 - **Sprint 3**: [Plan](#plan-for-sprint-3) · [Status](#sprint-3-status) · [View catalogue](#view-catalogue)
-- **Sprint 4**: [Plan](#sprint-4-plan) · [Status: ACID](#sprint-4-status-acid)
-  - [Method](#method) · [How to run](#how-to-run) · [Test catalogue](#test-catalogue) · [Durability procedure](#durability-procedure-manual)
+- **Sprint 4**: [Plan](#sprint-4-plan) · [Status](#sprint-4-status)
+  - [ERD changes](#erd-changes) · [ACID audit](#acid-audit) · [ACID results](#acid-results-measured-mysql-8046) · [Durability](#durability)
+- **Sprint 5**: [Plan](#sprint-5-plan) · [Limitations](#limitations) · [Goals](#goals)
 
 ## Project Schedule
 
@@ -51,6 +52,7 @@ Creating a database that helps organize creator tournaments for online games and
 | [sql/10_acid_fixes.sql](sql/10_acid_fixes.sql) | 2 UNIQUE, 6 NOT NULL, 6 `ON DELETE CASCADE`, 19 triggers |
 | [sql/run_acid_tests.sh](sql/run_acid_tests.sh) | Replays 07 + 08; `--fixed` also applies 10 ([before](sql/acid_test_output.txt) · [after](sql/acid_test_output_fixed.txt)) |
 | [sql/run_isolation_tests.sh](sql/run_isolation_tests.sh) | Drives both sessions of 09 concurrently |
+| [sql/run_durability_tests.ps1](sql/run_durability_tests.ps1) | D1/D2/D3 crash tests — needs an elevated PowerShell |
 | [mock-data/](mock-data/) | Source spreadsheets the mock data came from |
 
 ## Initial Functional requirements list:
@@ -376,8 +378,13 @@ Definitions in [sql/04_views.sql](sql/04_views.sql), grants in [sql/05_roles_and
 - Success Criteria: We would be able to identify and fix all violations in our database design resulting in no ACID properties violated. Have correct subsets implemented as well as having new strong and weak entity sets along with foreign keys and primary keys. Our new ERD would satisfy all aspects of a good conceptual design (correctness, completeness, minimality, expressiveness, readability, self-explanation, extensibility, and normality) with no underlying problems.
 
 ## Sprint 4 Status
-- Made sure our ERD didn't violate any aspects of a good conceptual design. Edited inital ERD to contain new tables that we have added in sprint 3. (MatchParticipants, Competitor)
-Relationship Table below:
+
+### ERD changes
+
+Made sure our ERD didn't violate any aspects of a good conceptual design. Edited
+the initial ERD to contain the new tables we added in Sprint 3
+(`MatchParticipant`, `Competitor`).
+
 | # | Change | Type | Affects | Justification |
 |---|---|---|---|---|
 | 1 | Delete `team1`/`team2`/`winner` diamonds | Repair | Match–Team | Removed from schema in Sprint 3; cannot represent solo or placement-scored events |
@@ -398,18 +405,33 @@ Relationship Table below:
 | 16 | Straight lines, parents above children | Readability | whole diagram | Named on the readability slide |
 | 17 | Split into 3 module pages | Readability | whole diagram | Decomposition "so that changes are localised" |
 
-- Audited all four ACID properties and wrote 24 tests for them 
-- Atomicity: found operations that write more than one table. Wrapped them in
-  4 stored procedures in `07_transactions.sql`.
-- Consistency: found rules our schema stated in comments but never enforced.
-- Isolation: tested dirty read, lost update, read skew and write skew across
-  two terminals. Fixed with `SELECT ... FOR UPDATE` and unique indexes.
-- Durability: depends on the storage engine, so `08_acid_tests.sql` opens with
-  a preflight that fails if any table is not InnoDB.
-- Rejected as weak entity sets: `Registration`, `Membership`, `PlayerMatchStats`
-  and the other junction tables. Their keys are entirely borrowed with no
-  discriminator of their own, so they are relationships, not weak entities.
-- Created new metric that focuses on Scalability and Flexability without needing to change the current schema.  
+Rejected as weak entity sets: `Registration`, `Membership`, `PlayerMatchStats`
+and the other junction tables. Their keys are entirely borrowed with no
+discriminator of their own, so they are relationships, not weak entities.
+
+Created a new metric that focuses on scalability and flexibility without needing
+to change the current schema.
+
+### ACID audit
+
+- Audited all four ACID properties and wrote 42 tests: 29 single-session in
+  [08_acid_tests.sql](sql/08_acid_tests.sql), 13 two-session in
+  [09_isolation_tests_a.sql](sql/09_isolation_tests_a.sql) / [_b](sql/09_isolation_tests_b.sql).
+- **Atomicity**: found operations that write more than one table. Wrapped them
+  in 4 stored procedures in [07_transactions.sql](sql/07_transactions.sql).
+- **Consistency**: found rules our schema stated in comments but never enforced
+  — every `-- APP/TRIGGER` note in `01_create_tables.sql`. Fixed with 2 UNIQUE
+  constraints, 6 `NOT NULL`, 6 `ON DELETE CASCADE` and 19 triggers in
+  [10_acid_fixes.sql](sql/10_acid_fixes.sql).
+- **Isolation**: tested dirty read, lost update, non-repeatable read and write
+  skew across two sessions. Fixed with `SELECT ... FOR UPDATE` and unique
+  indexes.
+- **Durability**: the InnoDB preflight in `08_acid_tests.sql` confirms the
+  engine *can* provide durability — a MyISAM table would make every atomicity
+  test pass for the wrong reason. It does not *demonstrate* durability. The
+  three crash tests are in
+  [run_durability_tests.ps1](sql/run_durability_tests.ps1) and need an elevated
+  shell to hard-kill mysqld; see [Durability](#durability) below.
 
 ### ACID results (measured, MySQL 8.0.46)
 
@@ -454,22 +476,42 @@ back **only the failing statement** and the transaction committed anyway, while
 a deadlock (ERROR 1213) rolled back the **whole** transaction. Same-looking
 failure, opposite scope.
 
-**Durability is NOT yet tested.** The InnoDB preflight in
-[08_acid_tests.sql](sql/08_acid_tests.sql) confirms the storage engine can
-provide durability; it does not demonstrate it. D1/D2/D3 need mysqld killed
-mid-run, which requires an elevated shell. Procedure is written up under
-[Durability procedure](#durability-procedure-manual) — about 5 minutes.
+### Durability
 
-# Sprint 5 Plan
+**Not yet run.** D1/D2/D3 need mysqld hard-killed mid-run, which requires an
+elevated shell. [run_durability_tests.ps1](sql/run_durability_tests.ps1) does
+all three in about two minutes:
 
-## Limitations: 
+```powershell
+# Right-click PowerShell -> Run as Administrator
+cd "c:\CSC370 Project\370-Design-Project\sql"
+.\run_durability_tests.ps1 -RootPassword '<root-password>'
+```
+
+| # | Test | Expected |
+|---|------|----------|
+| D1 | commit, hard-kill, restart | row **survives** — redo log replay |
+| D2 | same with `innodb_flush_log_at_trx_commit = 0` | row **lost** despite a successful COMMIT |
+| D3 | insert without committing, hard-kill | row **absent** — undo log at recovery |
+
+D2 deliberately relaxes a *server setting*, not the schema: it shows durability
+is a configuration property rather than something InnoDB gives unconditionally.
+The setting is a runtime global and is not persisted, so the restart in the
+middle of the test restores the `my.ini` value by itself.
+
+A clean shutdown would flush everything and make all three pass for the wrong
+reason, which is why the script uses `Stop-Process -Force`.
+
+## Sprint 5 Plan
+
+### Limitations
 - Null safety has not been audited. We wrote our views in Sprint 3, before the material on nulls and outer joins. Some joins in `04_views.sql` are inner joins on nullable columns, so they may be dropping dangling tuples silently.
 
 - We normalised to BCNF but never checked for lost dependencies. Sprint 2 used BCNF (module 07); module 23 later showed BCNF can lose functional dependencies. We have not computed our prime attributes to find out.
 
 - No query has been costed or indexed. Physical design is the last unit of the course, so nothing before now could use it. `01_create_tables.sql`  declares 0 indexes and we have never run EXPLAIN.
 
-## Goals:
+### Goals
 
 - Check our joins for dangling tuples
 Go through every join in `04_views.sql` and `03_test_queries.sql` and flag the
