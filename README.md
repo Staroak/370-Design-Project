@@ -16,7 +16,8 @@ organizers with each org's data isolated.
   - [Conceptual Design](#conceptual-design): [Entities](#entities) · [Relationships](#relationships-junction-tables-multiplicity)
 - **Sprint 2**: [Plan](#plan-for-sprint-2) · [Status Report](#status-report-for-sprint-2)
 - **Sprint 3**: [Plan](#plan-for-sprint-3) · [Status](#sprint-3-status) · [View catalogue](#view-catalogue)
-- **Sprint 4**: [Plan](#sprint-4-plan)
+- **Sprint 4**: [Plan](#sprint-4-plan) · [Status: ACID](#sprint-4-status-acid)
+  - [Method](#method) · [How to run](#how-to-run) · [Test catalogue](#test-catalogue) · [Durability procedure](#durability-procedure-manual)
 
 ## Project Schedule
 
@@ -44,6 +45,12 @@ Creating a database that helps organize creator tournaments for online games and
 | [sql/05_roles_and_grants.sql](sql/05_roles_and_grants.sql) | 8 roles, 11 accounts, grants |
 | [sql/06_permission_tests.sql](sql/06_permission_tests.sql) | ALLOW/DENY evidence, with [output](sql/permission_test_output.txt) |
 | [sql/run_permission_tests.sh](sql/run_permission_tests.sh) | Rebuilds the DB and replays every test |
+| [sql/07_transactions.sql](sql/07_transactions.sql) | The multi-table workload as 4 procedures, written correctly |
+| [sql/08_acid_tests.sql](sql/08_acid_tests.sql) | Single-session A/C evidence, with [output](sql/acid_test_output.txt) |
+| [sql/09_isolation_tests_a.sql](sql/09_isolation_tests_a.sql) · [_b](sql/09_isolation_tests_b.sql) | Two-session concurrency tests, with [output](sql/isolation_test_output.txt) |
+| [sql/10_acid_fixes.sql](sql/10_acid_fixes.sql) | 2 UNIQUE, 6 NOT NULL, 6 `ON DELETE CASCADE`, 19 triggers |
+| [sql/run_acid_tests.sh](sql/run_acid_tests.sh) | Replays 07 + 08; `--fixed` also applies 10 ([before](sql/acid_test_output.txt) · [after](sql/acid_test_output_fixed.txt)) |
+| [sql/run_isolation_tests.sh](sql/run_isolation_tests.sh) | Drives both sessions of 09 concurrently |
 | [mock-data/](mock-data/) | Source spreadsheets the mock data came from |
 
 ## Initial Functional requirements list:
@@ -368,4 +375,119 @@ Definitions in [sql/04_views.sql](sql/04_views.sql), grants in [sql/05_roles_and
 
 - Success Criteria: We would be able to identify and fix all violations in our database design resulting in no ACID properties violated. Have correct subsets implemented as well as having new strong and weak entity sets along with foreign keys and primary keys. Our new ERD would satisfy all aspects of a good conceptual design (correctness, completeness, minimality, expressiveness, readability, self-explanation, extensibility, and normality) with no underlying problems.
 
+## Sprint 4 Status
+- Made sure our ERD didn't violate any aspects of a good conceptual design. Edited inital ERD to contain new tables that we have added in sprint 3. (MatchParticipants, Competitor)
+Relationship Table below:
+| # | Change | Type | Affects | Justification |
+|---|---|---|---|---|
+| 1 | Delete `team1`/`team2`/`winner` diamonds | Repair | Match–Team | Removed from schema in Sprint 3; cannot represent solo or placement-scored events |
+| 2 | Add `Competitor` | Repair | new entity | Added Sprint 3, absent from diagram |
+| 3 | Add `EsportsOrg` + `BelongsTo` | Repair | new entity | Added Sprint 2, absent from diagram |
+| 4 | Add `MatchParticipant` M:N | Repair | Match–Competitor | Replacement for change 1; carries `placement`, `points` |
+| 5 | Delete `Match.final_score` | Minimality | Match | Derived from `placement`/`points` — Batini §6.3 |
+| 6 | `Competitor` → 2 subsets | Subset | lines 154–172 | Removes ENUM + 2 nullable FKs + CHECK |
+| 7 | `Contracts` → 2 subsets | Subset | lines 204–224 | Removes `party_type` + CHECK |
+| 8 | `Payments` → 2 subsets | Subset | lines 253–270 | Removes `payee_type` + CHECK |
+| 9 | `Match` → weak entity | Weak entity | Match, Tournament | Identifier {tournament_id, match_no}; no meaning outside its tournament |
+| 10 | `Deliverable` → weak entity | Weak entity | Deliverable, Contracts | Identifier {contract_id, deliverable_no} |
+| 11 | Add `match_no`, `deliverable_no` | Weak entity | 2 entities | Discriminator is what makes the entity weak |
+| 12 | Add 13 identifier ellipses | Correctness | all strong entities | v1 shows no attributes; "forgetting an identifier" is a named error |
+| 13 | Add attributes to 9 M:N diamonds | Correctness | 9 relationships | Relationship attributes belong on the diamond |
+| 14 | Add multiplicity arrowheads | Correctness | ~15 lines | "Forgetting a min/max specification" is a named error |
+| 15 | Rename 3× `For` | Minimality | 3 relationships | Duplicate relationship names — the lecture's own example |
+| 16 | Straight lines, parents above children | Readability | whole diagram | Named on the readability slide |
+| 17 | Split into 3 module pages | Readability | whole diagram | Decomposition "so that changes are localised" |
 
+- Audited all four ACID properties and wrote 24 tests for them 
+- Atomicity: found operations that write more than one table. Wrapped them in
+  4 stored procedures in `07_transactions.sql`.
+- Consistency: found rules our schema stated in comments but never enforced.
+- Isolation: tested dirty read, lost update, read skew and write skew across
+  two terminals. Fixed with `SELECT ... FOR UPDATE` and unique indexes.
+- Durability: depends on the storage engine, so `08_acid_tests.sql` opens with
+  a preflight that fails if any table is not InnoDB.
+- Rejected as weak entity sets: `Registration`, `Membership`, `PlayerMatchStats`
+  and the other junction tables. Their keys are entirely borrowed with no
+  discriminator of their own, so they are relationships, not weak entities.
+- Created new metric that focuses on Scalability and Flexability without needing to change the current schema.  
+
+### ACID results (measured, MySQL 8.0.46)
+
+Every test runs against the **unmodified** schema. An `INSERT` is an input, not
+a schema change: we submit a statement a real organizer could submit and record
+whether MySQL stops it. When it does not, the illegal row is the *output* — a
+genuine gap, not a manufactured one. Verdicts are computed by `COUNT(*)` on real
+rows, never asserted by a literal.
+
+| Run | Command | Result |
+|-----|---------|--------|
+| Single-session A + C, baseline | `bash run_acid_tests.sh <pw>` | **17 GAP · 12 OK · 0 FAIL** → [acid_test_output.txt](sql/acid_test_output.txt) |
+| Same, after `10_acid_fixes.sql` | `bash run_acid_tests.sh <pw> --fixed` | **5 GAP · 24 OK · 0 FAIL** → [acid_test_output_fixed.txt](sql/acid_test_output_fixed.txt) |
+| Two-session isolation | `bash run_isolation_tests.sh <pw>` | **8 GAP · 5 OK · 0 FAIL** → [isolation_test_output.txt](sql/isolation_test_output.txt) |
+
+**All 12 consistency gaps closed** (C1–C12). Preflight passed: every table
+InnoDB, 19 CHECK constraints declared *and* enforced, zero residue after each
+run. Verdicts were identical across two isolation runs, so the schedule is
+reproducible.
+
+The five that remain are the ones **no schema change can fix**, and saying so is
+the point rather than a shortfall:
+
+| | Why it survives |
+|---|---|
+| A1, A2 | Atomicity is how the *client groups statements*, not a property of the schema. Fix is to call the procedures in [07_transactions.sql](sql/07_transactions.sql). |
+| A5 | `CREATE USER` / `GRANT` are DDL and force an implicit commit. Account provisioning can never be atomic with the data it maps to in MySQL. |
+| A6 | A hand-rolled multi-statement cascade is not atomic. `A6-FIX` shows the single-statement `DELETE` *is* — it cascades through five tables, fails on `Payments`, and rolls the whole thing back. |
+| C13 | Reconciling `Transactions.category='staff'` against `Payments` is a reporting concern; a trigger on either table fires before the other side exists. |
+
+**Isolation — the strongest finding.** I4a, I4b, I4c and I5 relax **nothing**:
+real default `REPEATABLE READ`, unmodified schema, both transactions
+individually valid — and the prize pool still ends up **4000.00 paid against a
+3000.00 pool**. In the language of CSC370-19 these are schedules that are not
+conflict-serialisable. I1 and I3-RC *do* lower the isolation level deliberately,
+so they are demonstrations of what the default protects against, not defects;
+I3-RR runs the identical schedule at our default and comes back clean
+(9500.00 twice), which is the evidence that `REPEATABLE READ` earns its keep.
+
+A3 and A4 sit side by side on purpose: a lock-wait timeout (ERROR 1205) rolled
+back **only the failing statement** and the transaction committed anyway, while
+a deadlock (ERROR 1213) rolled back the **whole** transaction. Same-looking
+failure, opposite scope.
+
+**Durability is NOT yet tested.** The InnoDB preflight in
+[08_acid_tests.sql](sql/08_acid_tests.sql) confirms the storage engine can
+provide durability; it does not demonstrate it. D1/D2/D3 need mysqld killed
+mid-run, which requires an elevated shell. Procedure is written up under
+[Durability procedure](#durability-procedure-manual) — about 5 minutes.
+
+# Sprint 5 Plan
+
+## Limitations: 
+- Null safety has not been audited. We wrote our views in Sprint 3, before the material on nulls and outer joins. Some joins in `04_views.sql` are inner joins on nullable columns, so they may be dropping dangling tuples silently.
+
+- We normalised to BCNF but never checked for lost dependencies. Sprint 2 used BCNF (module 07); module 23 later showed BCNF can lose functional dependencies. We have not computed our prime attributes to find out.
+
+- No query has been costed or indexed. Physical design is the last unit of the course, so nothing before now could use it. `01_create_tables.sql`  declares 0 indexes and we have never run EXPLAIN.
+
+## Goals:
+
+- Check our joins for dangling tuples
+Go through every join in `04_views.sql` and `03_test_queries.sql` and flag the
+ones on nullable columns. Write `09_null_tests.sql` to prove each case.
+→ MEASURE: X of 16 views dropped rows before, 0 after.
+
+- Check our BCNF work for lost dependencies (3NF)
+Find the keys and prime attributes for all 24 relations.
+→ MEASURE: report L, the number of FDs our BCNF decomposition lost. Show L = 0,
+or give the 3NF decomposition that keeps them.
+
+- Add indexes and measure them
+Grow the data past 100k rows first, or MySQL just scans everything. Take the 3
+slowest of Q1-Q13 and predict their I/O cost before adding any index.
+→ MEASURE: all 3 predictions correct, and EXPLAIN shows half the rows examined
+on 2 of 3.
+
+- Focus on Scalability and Flexability
+See if our schema can handle new data such as: Basketball/tennis tournamnet. 
+Can measure success by validating if our db can process new data without modifiying our pre-existing schema
+The less we need to update our schema the more successful it'll be.
