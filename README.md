@@ -697,6 +697,7 @@ frontend UI. The graded files above are unchanged; the new work is layered on to
 | [sql/18_ui_seed_fill.sql](sql/18_ui_seed_fill.sql) | Data layer: bracket positions for all 15 seed matches, player/team profile fills, a **live** and an **upcoming** tournament, solo-player prize payouts, creator names, captain links |
 | [sql/run_ui_setup.sh](sql/run_ui_setup.sh) | Rebuilds the UI-ready database end to end and smoke-tests every closed gap → `ui_setup_output.txt` |
 | [UI_HANDOFF.md](UI_HANDOFF.md) | The database↔frontend contract: screens → views mapping, bracket rendering rules, vocabularies, auth strategy |
+| [ui/](ui/) | **Star Tournaments** — the phase-1 clickable frontend (zero dependencies): every screen from the handoff mapping, role switcher for all 7 tiers, interactive constellation starfield. Run `node ui/serve.mjs` and open http://localhost:5370 |
 
 This closes three of the four Future Plans (solo payouts, score direction, and the
 groundwork for the frontend UI). The BCNF normalization stays deliberately open —
