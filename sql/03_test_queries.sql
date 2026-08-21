@@ -3,19 +3,33 @@ USE design_project_370;
 
 
 -- Q1: Is this tournament profitable? (revenue - expenses per tournament)
+-- Sprint 5 null repair: SUM() over no rows is NULL, not 0, and NULL arithmetic
+-- spreads through the whole profit column. A tournament with expenses and no
+-- revenue reported profit = NULL instead of a loss, so a "which events lost
+-- money" filter could never find it. Evidence: test N7 in 11_null_tests.sql.
 SELECT
     t.tournament_id
   , t.name
-  , (SELECT SUM(tr.amount) FROM Transactions tr
-     WHERE tr.tournament_id = t.tournament_id AND tr.type = 'revenue') AS total_revenue
-  , (SELECT SUM(tr.amount) FROM Transactions tr
-     WHERE tr.tournament_id = t.tournament_id AND tr.type = 'expense') AS total_expense
-  , (SELECT SUM(tr.amount) FROM Transactions tr
-     WHERE tr.tournament_id = t.tournament_id AND tr.type = 'revenue')
-  - (SELECT SUM(tr.amount) FROM Transactions tr
-     WHERE tr.tournament_id = t.tournament_id AND tr.type = 'expense') AS profit
+  , COALESCE((SELECT SUM(tr.amount) FROM Transactions tr
+              WHERE tr.tournament_id = t.tournament_id AND tr.type = 'revenue'), 0) AS total_revenue
+  , COALESCE((SELECT SUM(tr.amount) FROM Transactions tr
+              WHERE tr.tournament_id = t.tournament_id AND tr.type = 'expense'), 0) AS total_expense
+  , COALESCE((SELECT SUM(tr.amount) FROM Transactions tr
+              WHERE tr.tournament_id = t.tournament_id AND tr.type = 'revenue'), 0)
+  - COALESCE((SELECT SUM(tr.amount) FROM Transactions tr
+              WHERE tr.tournament_id = t.tournament_id AND tr.type = 'expense'), 0) AS profit
 FROM Tournament t
 ORDER BY profit DESC;
+
+-- Q1 companion: the org-level money Q1 can never show, because it is attached
+-- to no tournament at all. Reported separately rather than left invisible.
+SELECT
+    '(org-level -- not attributed to a tournament)' AS scope
+  , COALESCE(SUM(CASE WHEN type = 'revenue' THEN amount ELSE 0 END), 0) AS total_revenue
+  , COALESCE(SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END), 0) AS total_expense
+  , COALESCE(SUM(CASE WHEN type = 'revenue' THEN amount ELSE -amount END), 0) AS profit
+FROM Transactions
+WHERE tournament_id IS NULL;
 
 
 -- Q2: Which creators are in event #1?
@@ -84,49 +98,86 @@ LIMIT 5;
 -- Restricted to bracket formats: in a points-by-placement event the champion is
 -- decided on total points, not by the last lobby -- that case is Q14.
 -- The COALESCE means one query covers team champions and solo champions.
+--
+-- Sprint 5, two repairs in one (see 16_query_rewrites.sql):
+--   null safety -- scheduled_time is NULLABLE. MAX() over all-NULL is NULL and
+--     "scheduled_time = NULL" is UNKNOWN, so a tournament whose times were never
+--     entered silently had no champion at all (test N8).
+--   physical design -- the old dependent subquery re-ran once per outer row, so
+--     no index could help it. Computing the final of every tournament once, as a
+--     grouped derived table, cut rows examined from 502,451 to 7,102 (70.75x) on
+--     370,910 rows with the index unchanged.
+-- MAX() ignores NULLs, so agg.mx is NULL only when every match in that
+-- tournament has a NULL time -- exactly what the OR arm catches.
 SELECT
-    COALESCE(tm.team_name, pl.ign) AS champion
+    COALESCE(tm.team_name, pl.ign, '(competitor not named)') AS champion
   , c.competitor_type
   , COUNT(*) AS tournaments_won
 FROM `Match` m
-JOIN Tournament t         ON t.tournament_id = m.tournament_id
-JOIN MatchParticipant mp  ON mp.match_id = m.match_id AND mp.placement = 1
-JOIN Competitor c         ON c.competitor_id = mp.competitor_id
-LEFT JOIN Teams tm        ON tm.team_id   = c.team_id
-LEFT JOIN Players pl      ON pl.player_id = c.player_id
+JOIN (
+        SELECT
+            mm.tournament_id
+          , MAX(mm.match_id) AS last_match_id
+        FROM `Match` mm
+        JOIN (
+                SELECT
+                    tournament_id
+                  , MAX(scheduled_time) AS mx
+                FROM `Match`
+                GROUP BY tournament_id
+             ) agg ON agg.tournament_id = mm.tournament_id
+        WHERE mm.scheduled_time = agg.mx
+           OR (agg.mx IS NULL AND mm.scheduled_time IS NULL)
+        GROUP BY mm.tournament_id
+     ) lm                ON lm.last_match_id = m.match_id
+JOIN Tournament t        ON t.tournament_id = m.tournament_id
+JOIN MatchParticipant mp ON mp.match_id = m.match_id AND mp.placement = 1
+JOIN Competitor c        ON c.competitor_id = mp.competitor_id
+LEFT JOIN Teams tm       ON tm.team_id   = c.team_id
+LEFT JOIN Players pl     ON pl.player_id = c.player_id
 WHERE t.format = 'Single Elimination'
-  AND m.scheduled_time = (
-      SELECT MAX(m2.scheduled_time)
-      FROM `Match` m2
-      WHERE m2.tournament_id = m.tournament_id
-  )
 GROUP BY c.competitor_id, c.competitor_type, tm.team_name, pl.ign
 ORDER BY tournaments_won DESC, champion;
 
 
 -- Q8: Who is still owed money? (staff and teams with unpaid status)
-SELECT 'staff' AS payee_type, u.full_name AS payee, t.name AS tournament, p.amount, p.status
+-- Sprint 5 null repair: Payments.status is NULLABLE and NULL <> 'paid' is
+-- UNKNOWN, not TRUE, so a debt nobody had recorded a status for was missing from
+-- the report that exists to find unrecorded debts -- 1,887.00 of it (test N9).
+-- The two inner joins are deliberately left alone: staff_user_id and team_id are
+-- the XOR pair and each arm selects one kind of payee. UNION became UNION ALL --
+-- plain UNION would silently merge a staff and a team debt that happened to
+-- agree on amount, status and tournament.
+SELECT 'staff' AS payee_type, u.full_name AS payee, t.name AS tournament
+     , p.amount, COALESCE(p.status, 'unrecorded') AS status
 FROM Payments p
 JOIN Users u      ON u.user_id = p.staff_user_id
 JOIN Tournament t ON t.tournament_id = p.tournament_id
-WHERE p.status <> 'paid'
-UNION
-SELECT 'team' AS payee_type, tm.team_name AS payee, t.name AS tournament, p.amount, p.status
+WHERE COALESCE(p.status, '') <> 'paid'
+UNION ALL
+SELECT 'team' AS payee_type, tm.team_name AS payee, t.name AS tournament
+     , p.amount, COALESCE(p.status, 'unrecorded') AS status
 FROM Payments p
 JOIN Teams tm     ON tm.team_id = p.team_id
 JOIN Tournament t ON t.tournament_id = p.tournament_id
-WHERE p.status <> 'paid'
+WHERE COALESCE(p.status, '') <> 'paid'
 ORDER BY amount DESC;
 
 
 -- Q9: Which players have the highest and lowest K/D ratio? (highest first, lowest last)
+-- Sprint 5 null repair: x / 0 is NULL in MySQL rather than an error, and MySQL
+-- sorts NULL last under DESC, so the player who has never died -- the best K/D
+-- in the table -- was cut off by LIMIT 5. An undefined ratio is now labelled and
+-- ranked first instead of silently discarded (test N10).
 SELECT
     pl.ign
-  , ROUND(SUM(pms.kills) / SUM(pms.deaths), 2) AS kd_ratio
+  , ROUND(SUM(pms.kills) / NULLIF(SUM(pms.deaths), 0), 2) AS kd_ratio
+  , CASE WHEN COALESCE(SUM(pms.deaths), 0) = 0
+         THEN 'undefined -- no deaths recorded' ELSE '' END AS note
 FROM Players pl
 JOIN PlayerMatchStats pms ON pms.player_id = pl.player_id
 GROUP BY pl.player_id, pl.ign
-ORDER BY kd_ratio DESC
+ORDER BY (COALESCE(SUM(pms.deaths), 0) = 0) DESC, kd_ratio DESC
 LIMIT 5;
 
 
@@ -143,15 +194,21 @@ WHERE m.role = 'admin';
 
 
 -- Q11: Were sponsor deliverables fulfilled? (count per sponsor, per status)
+-- Sprint 5 null repair: a sponsor whose contract has no Deliverables row was
+-- dropped by the inner join -- and a sponsor who delivered nothing is exactly the
+-- one a fulfilment report has to show. 7,500.00 of contract value was invisible
+-- (test N11). COUNT(*) became COUNT(d.deliverable_id) so "nothing delivered"
+-- reads as 0 rather than 1. c.party_type stays in the ON clause: in WHERE it
+-- would discard every sponsor with no sponsor contract, undoing the outer join.
 SELECT
     s.company_name
-  , d.status
-  , COUNT(*) AS num_deliverables
+  , COALESCE(d.status, '(no deliverable recorded)') AS status
+  , COUNT(d.deliverable_id) AS num_deliverables
 FROM Sponsors s
-JOIN Contracts c    ON c.sponsor_id = s.sponsor_id AND c.party_type = 'sponsor'
-JOIN Deliverables d ON d.contract_id = c.contract_id
+LEFT JOIN Contracts c    ON c.sponsor_id  = s.sponsor_id AND c.party_type = 'sponsor'
+LEFT JOIN Deliverables d ON d.contract_id = c.contract_id
 GROUP BY s.sponsor_id, s.company_name, d.status
-ORDER BY s.company_name, d.status;
+ORDER BY s.company_name, status;
 
 
 -- Q12: Which sponsors are worth renewing? (total spend + deliverable fulfillment)

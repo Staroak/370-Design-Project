@@ -1,0 +1,480 @@
+
+USE design_project_370;
+
+
+-- #####################################################################
+-- PART 0 -- THE MODEL, AND THE ONE THING THE README GOT WRONG
+-- #####################################################################
+--
+-- COST MODEL (CSC370-29, "The External Memory Model")
+--   - Operations in memory are free.
+--   - Each access to a 4KB block of data has unit cost, even if we only need
+--     1 bit.
+--   - The cost of an algorithm is therefore the number of blocks read and
+--     written. Blocks read and blocks written are our two primitive
+--     operations.
+--   So every number below is a count of 4KB block transfers.
+--
+-- NOTATION (CSC370-33, "Cost Estimation")
+--   T(R)    the number of tuples in relation R
+--   B(R)    the number of blocks occupied by relation R
+--   V(R,x)  the number of distinct values for attribute x in R
+--   B(M)    memory, in blocks
+--   M       the fan-out of a B+-tree directory node (the deck reuses the
+--           letter; it is only ever written inside log_M(N))
+--
+-- SIZE ESTIMATION RULES USED (CSC370-33, after Garcia-Molina 2008 s16.4)
+--   equality      T(sigma_{x=c}(R)) = T(R) / V(R,x)
+--   conjunction   independent events, so the selectivities multiply
+--   grouping      T(gamma_x(R)) = V(R,x)   -- one group per unique value
+--   PK/FK join    match probability = 1 / max(V(R,x), V(S,x))
+--
+-- B+-TREE FACTS USED (CSC370-30)
+--   - Each node is one block (4KB) and therefore one I/O. NO discount is
+--     taken for a cached root: the deck costs every level of the descent.
+--   - Point lookup costs log_M(N) I/O's.
+--   - Range query costs log_M(N) + O I/O's, where O is the output.
+--   - Fan-out is derived by maximising d subject to
+--         key_bytes * d + 8 * (d + 1) <= 4096
+--     which is the deck's own derivation (it gets d = 340 for a 4B key).
+--   - Clustered: "records are packed as tightly as possible, i.e.
+--     B(R) ~ T(R)/block_size. A clustered index on a clustered relation will
+--     point to a contiguous range for each value."
+--     Non-clustered: "records can be scattered ... will not necessarily have
+--     equal values stored contiguously."
+--     The deck states this qualitatively and stops. The quantitative form
+--     used below -- a non-clustered index costs ONE BLOCK READ PER MATCHING
+--     TUPLE, because each matching tuple may sit in a different block -- is
+--     imported from the section the deck cites, Garcia-Molina s15.6.1. It is
+--     flagged here rather than passed off as course notation.
+--
+-- --------------------------------------------------------------------
+-- THE CORRECTION. The README says:
+--
+--     "01_create_tables.sql declares 0 indexes and we have never run
+--      EXPLAIN."
+--
+-- The first half is true and the conclusion drawn from it is false. The
+-- database does not have 0 indexes. It has roughly 60. Every PRIMARY KEY and
+-- every UNIQUE in 01_create_tables.sql creates one, and -- the part we had
+-- not accounted for -- InnoDB REQUIRES an index on the child columns of every
+-- foreign key and CREATES ONE SILENTLY if the schema does not supply it.
+-- This is exactly the fact the "Creating Indexes" lesson review examines,
+-- where PRIMARY KEY, UNIQUE and ALTER TABLE ... ADD FOREIGN KEY all count
+-- toward the number of automatically generated indexes and only
+-- CREATE TABLE ... AS SELECT creates none.
+--
+-- So there are auto-created single-column indexes on, among others,
+-- Transactions(tournament_id), Match(tournament_id), PlayerMatchStats
+-- (match_id), Registration(tournament_id) and Payments(tournament_id).
+--
+-- This matters enormously and it is why the baselines below are NOT
+-- "full table scan". The honest baseline for this schema is
+-- "single-column non-clustered index, one block read per matching tuple",
+-- and the thing our three new indexes actually buy is not access to a
+-- previously unreachable path -- it is the elimination of the non-clustered
+-- fetch. run_index_tests.sh prints the full index inventory before it
+-- measures anything, so this claim is checked rather than asserted.
+-- --------------------------------------------------------------------
+
+
+-- #####################################################################
+-- PART 1 -- RELATION SIZES AFTER 13_bulk_data.sql
+--
+-- Tuple widths: INT 4B, DATE 3B, DATETIME 5B, DECIMAL(12,2) 6B, ENUM 1B,
+-- VARCHAR average occupancy + 1. Rounded UP to a multiple of 4, per the
+-- deck's "we can waste space at the end of each tuple and at the end of
+-- each block". Tuples per block = floor(4096 / width).
+-- #####################################################################
+--
+--   R                   T(R)      width  tuples/blk   B(R)
+--   ---------------------------------------------------------
+--   Game                    10      64        64         1
+--   Tournament             400      80        51         8
+--   Teams                1,000      32       128         8
+--   Players              5,000      48        85        59
+--   Competitor           5,954      16       256        24
+--   Payments            12,679      32       128       100
+--   Registration        12,694      16       256        50
+--   Match               15,855      20       204        78
+--   Transactions        19,811      40       102       195
+--   MatchParticipant    63,402      16       256       248
+--   PlayerMatchStats   158,500      24       170       933   <- largest
+--
+-- Derived, from the generator's own formulas:
+--   V(Transactions, tournament_id) = 400   -> T/V = 50 tuples per tournament
+--   V(Transactions, type)          = 2     -> exactly 25 revenue, 25 expense
+--   V(Match, tournament_id)        = 400   -> T/V = 40 matches per tournament
+--   V(PlayerMatchStats, match_id)  = 15855 -> T/V = 10 players per match
+--   V(Tournament, format)          = 2     -> 300 of 400 Single Elimination
+--
+-- B+-tree fan-outs, by the deck's derivation  key*d + 8(d+1) <= 4096 :
+--   4B  key (a single INT)              -> M = 340
+--   9B  key (INT, DATETIME)             -> M = 240
+--   11B key (INT, ENUM, DECIMAL(12,2))  -> M = 215
+--   12B key (INT, INT, INT)             -> M = 204
+--
+-- Heights, ceil(log_M(N)), no root discount:
+--   FK index Transactions(tournament_id)   log_340(19811)  = 1.70 -> 2
+--   new idx  Transactions(tid,type,amount) log_215(19811)  = 1.84 -> 2
+--   FK index Match(tournament_id)          log_340(15855)  = 1.66 -> 2
+--   new idx  Match(tid, scheduled_time)    log_240(15855)  = 1.77 -> 2
+--   FK index PlayerMatchStats(match_id)    log_340(158500) = 2.05 -> 3
+--   new idx  PMS(match_id,player_id,kills) log_204(158500) = 2.25 -> 3
+--   PK Tournament / Match / Players / Competitor / Teams          -> 2
+--   PK Game                                                       -> 1
+
+
+-- #####################################################################
+-- PART 2 -- WHICH THREE QUERIES, AND WHY THOSE THREE
+-- #####################################################################
+--
+-- Ranked by predicted block transfers at the 370,910-row scale. The ranking
+-- is derived from query SHAPE -- what each one has to touch -- not guessed.
+--
+--   rank  Q    driving relation      shape                         predicted
+--                                                                   I/O
+--   ------------------------------------------------------------------------
+--     1   Q6   PlayerMatchStats      4 PK joins over the largest      717,353
+--                                    relation + GROUP BY + sort
+--     2   Q13  MatchParticipant      5 PK joins over 63,402 tuples,  ~636,000
+--                                    GROUP BY + window + sort
+--     3   Q7   Match                 DEPENDENT SUBQUERY per match     527,864
+--                                    row + 5 joins
+--     4   Q1   Tournament            4 DEPENDENT SUBQUERIES per        84,808
+--                                    tournament row
+--     5   Q9   PlayerMatchStats      1 join, group on the PK prefix   ~ 60,000
+--     6   Q12  Sponsors              3 dependent subqueries, small   ~ 35,000
+--     7   Q3   Tournament            1 outer join + group            ~  1,000
+--    8-13  Q2 Q4 Q5 Q8 Q10 Q11       single-tournament or small      <  1,000
+--                                    dimension queries
+--
+-- CHOSEN: Q6, Q7, Q1.
+--
+-- The top three by cost are Q6, Q13 and Q7. Q6 and Q7 are taken as they
+-- stand. Q13 is DROPPED and rank 4, Q1, promoted in its place. That is a
+-- deliberate substitution, and the reason is methodological rather than
+-- arithmetic:
+--
+--   Q13 and Q6 ARE THE SAME QUERY SHAPE. Both scan one large junction table,
+--   fan out through primary-key equality joins with a match probability of
+--   1/max(V(R,x),V(S,x)) = 1/T(inner), then GROUP BY and sort. Testing both
+--   would measure one lesson twice. Q6 is the larger of the pair (158,500
+--   driving tuples against 63,402), so Q6 represents the class.
+--
+--   Q1 is the only query in the top four with a DIFFERENT shape: its cost is
+--   not a scan at all, it is 1,600 repetitions of a tiny lookup. That is the
+--   case the "Creating Indexes" lesson review names as the single best
+--   candidate for a new index -- "You have a lot of correlated sub-queries on
+--   an attribute x", whose feedback reads: "Indeed. These are perhaps the
+--   most expensive type of query you can issue and this is the best hope for
+--   making it faster." Q7 is the same category. Two of our three picks are
+--   the course's own named best case, and one is its named hard case.
+--
+-- Predicted outcome, committed: Q7 and Q1 fall by more than half. Q6 DOES
+-- NOT. See PART 5.
+
+
+-- #####################################################################
+-- PART 3 -- Q1, PREDICTED BEFORE AND AFTER
+--
+--   SELECT t.tournament_id, t.name
+--        , (SELECT SUM(tr.amount) FROM Transactions tr
+--           WHERE tr.tournament_id = t.tournament_id AND tr.type='revenue')
+--        , (SELECT ... 'expense')
+--        , (SELECT ... 'revenue') - (SELECT ... 'expense')
+--   FROM Tournament t ORDER BY profit DESC;
+-- #####################################################################
+--
+-- SHAPE. There is no WHERE clause on Tournament, so all T(Tournament) = 400
+-- tuples survive, and the same correlated subquery is written out FOUR times
+-- -- the profit column recomputes both sums rather than reusing them. MySQL
+-- does not share identical dependent subqueries, so this is
+--     4 * T(Tournament) = 1,600 evaluations.
+--
+-- ---- BEFORE ---------------------------------------------------------
+-- Access path: the InnoDB-generated FK index on Transactions(tournament_id).
+-- It is NON-CLUSTERED and it does not contain `type` or `amount`, so every
+-- matching tuple must be fetched from its own block.
+--
+--   tuples matched, per the equality rule:
+--       T(Transactions) / V(Transactions, tournament_id) = 19811/400 = 50
+--
+--   one evaluation = log_M(N)          descend              2
+--                  + O                 leaves, ceil(50/340) 1
+--                  + 50                non-clustered fetch,
+--                                      one block per tuple  50
+--                  = 53
+--
+--   TableScan(Tournament)                       B(Tournament) =      8
+--   1,600 evaluations * 53                                     84,800
+--   ORDER BY: 400 tuples * 80B = 8 blocks <= B(M), free             0
+--
+--   ===> PREDICTED BEFORE:  84,808 block transfers
+--   ===> PREDICTED ROWS EXAMINED: 400 + 1,600*50 = 80,400
+--
+-- ---- AFTER  idx_tx_tournament_type_amount (tournament_id, type, amount) --
+-- Every attribute the subquery touches is now in the key, so the plan is
+-- IndexScan(R, A) with no fetch at all. The non-clustered penalty -- 80,000
+-- of the 84,808 blocks -- disappears, and the second key column halves the
+-- entries read.
+--
+--   tuples matched, conjunction of two independent equalities:
+--       T(R) / (V(R,tournament_id) * V(R,type)) = 19811/(400*2) = 25
+--
+--   one evaluation = 2 descend + ceil(25/215) = 1 leaf   = 3
+--
+--   TableScan(Tournament)                                          8
+--   1,600 * 3                                                  4,800
+--
+--   ===> PREDICTED AFTER:  4,808 block transfers    (17.6x fewer)
+--   ===> PREDICTED ROWS EXAMINED: 400 + 1,600*25 = 40,400
+--                                 on Transactions alone 80,000 -> 40,000,
+--                                 i.e. EXACTLY 2.00x, and exactly half.
+--
+-- The factor is exactly two and not more, and that is predictable rather
+-- than lucky: the four subqueries ask for 'revenue' twice and 'expense'
+-- twice, V(Transactions,type) = 2, and the generator splits the two values
+-- 25/25 in every tournament. Adding `type` to the key can therefore remove
+-- precisely one half of the entries and no more.
+--
+-- WHY `amount` IS IN THE KEY. An index on (tournament_id, type) alone would
+-- cost 2 + 1 + 25 non-clustered fetches = 28 per evaluation, i.e.
+-- 8 + 1,600*28 = 44,808 blocks. Carrying the aggregated column in the key
+-- is worth 40,000 block transfers. That is the clustered/non-clustered
+-- distinction from CSC370-30 expressed as a single number.
+
+
+-- #####################################################################
+-- PART 4 -- Q7, PREDICTED BEFORE AND AFTER
+--
+--   FROM `Match` m JOIN Tournament t JOIN MatchParticipant mp
+--        JOIN Competitor c LEFT JOIN Teams LEFT JOIN Players
+--   WHERE t.format = 'Single Elimination'
+--     AND m.scheduled_time = (SELECT MAX(m2.scheduled_time)
+--                             FROM `Match` m2
+--                             WHERE m2.tournament_id = m.tournament_id)
+-- #####################################################################
+--
+-- SHAPE. The dependent subquery is correlated on m.tournament_id, so it is
+-- re-evaluated for EVERY Match tuple that survives the format filter, and
+-- each evaluation reads that tournament's whole set of matches. The cost is
+-- therefore quadratic in matches-per-tournament, and it is the only term
+-- that matters: it is 97% of the total.
+--
+--   V(Tournament, format) = 2; 300 of the 400 tournaments are
+--   'Single Elimination' (the generator makes 297 of 396, plus 3 seeded).
+--   Surviving Match tuples = 297*40 + 12 = 11,892.
+--   T(Match) / V(Match, tournament_id) = 15855/400 = 40 matches per tournament.
+--
+-- ---- BEFORE ---------------------------------------------------------
+-- Access path for BOTH the outer Match join and the subquery: the
+-- InnoDB-generated FK index Match(tournament_id). Non-clustered, and it does
+-- not contain scheduled_time, so all 40 tuples are fetched every time.
+--
+--   one Match access = 2 descend + 1 leaf + 40 fetches            = 43
+--
+--   TableScan(Tournament) + Filter(format)      B(Tournament) =       8
+--   outer Match, 300 SE tournaments * 43                         12,900
+--   MAX subquery, 11,892 evaluations * 43                       511,356   <--
+--   MatchParticipant for the 300 finals, PK prefix range, *3         900
+--   Competitor + Teams + Players PK lookups, 300 * (3+3+3)         2,700
+--   GROUP BY / ORDER BY over ~300 tuples, in memory                    0
+--
+--   ===> PREDICTED BEFORE:  527,864 block transfers
+--   ===> PREDICTED ROWS EXAMINED:
+--          400 + 300*40 + 11,892*40 + 300*4 + 900 = 490,180
+--
+-- ---- AFTER  idx_match_tournament_time (tournament_id, scheduled_time) ----
+-- Two separate effects, and the first is the large one:
+--
+--   1. MIN/MAX BY INDEX. The subquery is an equality on the LEADING key
+--      column with MAX on the column IMMEDIATELY AFTER it. The leaves of a
+--      B+-tree hold all keys sorted, so the maximum scheduled_time for a
+--      given tournament_id is the LAST entry of that key group -- reachable
+--      by one descent. log_M(N) = 2 I/O's, output O = 1 tuple.
+--      43 -> 2, and 40 tuples examined -> 1.
+--   2. The outer Match access becomes IndexScan(R, A): the index carries
+--      scheduled_time, so the 40 fetches per tournament vanish. 43 -> 3.
+--
+--   TableScan(Tournament)                                              8
+--   outer Match, 300 * 3                                             900
+--   MAX subquery, 11,892 * 2                                      23,784
+--   MatchParticipant + Competitor + Teams + Players                3,600
+--
+--   ===> PREDICTED AFTER:  28,292 block transfers   (18.7x fewer)
+--   ===> PREDICTED ROWS EXAMINED:
+--          400 + 300*40 + 11,892*1 + 300*4 + 900 = 26,392   (18.6x fewer)
+--
+-- Comfortably past half. This is the prediction most likely to hold, because
+-- the dominant term is a single arithmetic product, 11,892 * 40, and it
+-- does not depend on which join order the optimiser picks.
+
+
+-- #####################################################################
+-- PART 5 -- Q6, PREDICTED BEFORE AND AFTER
+--           (the prediction here is that the index BARELY HELPS)
+--
+--   FROM PlayerMatchStats pms
+--   JOIN `Match` m JOIN Tournament t JOIN Game g JOIN Players pl
+--   GROUP BY g.game_id, g.title, pl.player_id, pl.ign
+--   ORDER BY g.title, total_kills DESC LIMIT 5
+-- #####################################################################
+--
+-- SHAPE. No WHERE clause anywhere. The query aggregates over the whole of
+-- PlayerMatchStats, the largest relation (B = 933, T = 158,500), and all
+-- four joins are equalities on a primary key, so by the join rule the match
+-- probability is 1/max(V(R,x),V(S,x)) = 1/T(inner) and the fan-out of each
+-- is exactly 1. LIMIT 5 cannot stop anything early: every group must be
+-- complete before the sort can name the top 5.
+--
+-- PREDICTED PLAN. Left-deep, relations ordered left to right by increasing
+-- size -- the join-ordering heuristic from CSC370-33 -- which here means
+--     Game -> Tournament -> Match -> PlayerMatchStats -> Players.
+-- The discriminator is simply which table EXPLAIN lists first. If it lists
+-- PlayerMatchStats first instead, the I/O figures below are wrong but the
+-- ROWS EXAMINED conclusion is unchanged, which is the claim being tested.
+--
+-- ---- BEFORE ---------------------------------------------------------
+--   TableScan(Game)                              B(Game) =           1
+--   Tournament via FK idx game_id, 400/10 = 40 each:
+--       10 * (2 + 1 + 40 fetches)                                  430
+--   Match via FK idx tournament_id, 40 each:
+--       400 * (2 + 1 + 40 fetches)                              17,200
+--   PlayerMatchStats via FK idx match_id, 10 each. The FK index does NOT
+--   carry `kills`, so all 10 are fetched:
+--       15,855 * (3 + 1 + 10 fetches)                          221,970
+--   Players, PK lookup once per pms tuple:
+--       158,500 * (2 + 1)                                      475,500   <--
+--   gamma: T(gamma) = V(pms, (game,player)) ~ 48,000 groups, 48B each
+--          -> 563 blocks, materialised and read back, then sorted
+--       ~2,252
+--
+--   ===> PREDICTED BEFORE:  717,353 block transfers
+--   ===> PREDICTED ROWS EXAMINED:
+--          10 + 400 + 15,855 + 158,500 + 158,500 = 333,265
+--
+-- ---- AFTER  idx_pms_match_player_kills (match_id, player_id, kills) -----
+-- The index carries every PlayerMatchStats attribute Q6 touches, so that
+-- access becomes IndexScan(R, A) and the 158,550 non-clustered fetches go
+-- away. Nothing else changes.
+--
+--   PlayerMatchStats: 15,855 * (3 + 1)                          63,420
+--   everything else as above
+--
+--   ===> PREDICTED AFTER:  558,803 block transfers   (only 1.28x fewer)
+--   ===> PREDICTED ROWS EXAMINED:  333,265  -- UNCHANGED, factor 1.00x
+--
+-- THIS IS THE THIRD PREDICTION, AND IT IS A PREDICTION OF FAILURE.
+-- Committed in advance: no index will halve Q6's rows examined, and the one
+-- created below will not come close.
+--
+-- The reason is structural, not a shortcoming of the index chosen. Rows
+-- examined can only fall if some rule removes tuples, and Q6 offers neither:
+--   - the equality rule T(R)/V(R,x) needs a predicate, and Q6 has none;
+--   - the join rule needs fan-out, and every join here has fan-out 1.
+-- An index changes how WIDE a block is. It cannot change how many tuples an
+-- unrestricted aggregate has to look at. The only structure that would is a
+-- materialised aggregate -- a summary table refreshed on write -- which is
+-- not physical design and is out of scope for this sprint.
+--
+-- The index is still created, for the 158,550 fetches it removes and because
+-- the remaining 475,500-block term is 158,500 lookups into Players, a
+-- 59-block relation that is resident in the buffer pool in practice. The
+-- external memory model charges full price for those; the wall-clock number
+-- from EXPLAIN ANALYZE will not. Watching the model over-charge for a
+-- lookup into a tiny relation is itself the finding.
+
+
+-- #####################################################################
+-- PART 6 -- THE INDEXES
+-- #####################################################################
+
+-- ---------------------------------------------------------------------
+-- TARGETS Q1.  Covering / index-only: the two predicate columns and the
+-- aggregated column are all in the key, so SUM(amount) is answered from the
+-- index and the 80,000 non-clustered row fetches disappear.
+-- Column order is forced: tournament_id first because it is the correlated
+-- equality, type second because it is the constant equality, amount last
+-- because it is only carried, never searched.
+--   predicted  84,808 -> 4,808 blocks   /   80,400 -> 40,400 rows examined
+-- ---------------------------------------------------------------------
+CREATE INDEX idx_tx_tournament_type_amount
+    ON Transactions (tournament_id, type, amount);
+
+-- ---------------------------------------------------------------------
+-- TARGETS Q7.  Supports the dependent MAX subquery as a MIN/MAX-by-index:
+-- equality on the leading column, MAX on the next, so one descent to the
+-- last entry of the key group replaces reading all 40 of that tournament's
+-- matches. Also covering for the outer join, which needs exactly
+-- tournament_id and scheduled_time.
+--   predicted  527,864 -> 28,292 blocks  /  490,180 -> 26,392 rows examined
+-- ---------------------------------------------------------------------
+CREATE INDEX idx_match_tournament_time
+    ON `Match` (tournament_id, scheduled_time);
+
+-- ---------------------------------------------------------------------
+-- TARGETS Q6 (and Q9 incidentally).  Covering: match_id for the join,
+-- player_id for the join and the grouping, kills for the SUM. Removes
+-- 158,550 non-clustered fetches from the largest relation in the database.
+-- Predicted NOT to reduce rows examined at all -- see PART 5. It is included
+-- to make that prediction falsifiable, not because it is expected to win.
+--   predicted  717,353 -> 558,803 blocks  /  333,265 -> 333,265 rows examined
+-- ---------------------------------------------------------------------
+CREATE INDEX idx_pms_match_player_kills
+    ON PlayerMatchStats (match_id, player_id, kills);
+
+
+-- #####################################################################
+-- PART 7 -- CONSIDERED AND REJECTED
+--
+-- An index is not free: it is a second structure to maintain on every write
+-- and a second thing for the optimiser to cost. These were each worked out
+-- and then discarded, with the reason.
+-- #####################################################################
+--
+-- Tournament(format)  -- for Q7's WHERE t.format = 'Single Elimination'.
+--     V(Tournament, format) = 2, so the equality rule gives T/V = 200
+--     tuples, and the actual figure is 300 of 400. B(Tournament) is 8. The
+--     index path would cost 2 descend + 1 leaf + 300 non-clustered fetches
+--     = 303 blocks against a TableScan's 8. The scan wins by 38x.
+--     This is the "Creating Indexes" review's own wrong answer: "You have a
+--     table R with attribute x that only has a small number of unique
+--     values." Low V(R,x) is the disqualifier, and the course states it as a
+--     cardinality judgement, not a percentage threshold.
+--
+-- Transactions(type) and Payments(status)  -- V = 2 in both. Same reason.
+--
+-- MatchParticipant(match_id, placement)  -- would turn Q7's 4-tuple range
+--     into a 1-tuple lookup. That is 900 of Q7's 490,180 rows examined:
+--     0.18%. Not worth a fourth index. And it is redundant anyway:
+--     10_acid_fixes.sql already adds UNIQUE (match_id, placement), which
+--     supplies this index for free whenever 10 is applied.
+--
+-- Anything on a plain foreign-key column  -- Transactions(tournament_id),
+--     Match(tournament_id), PlayerMatchStats(match_id), Registration
+--     (tournament_id), Payments(tournament_id), and about twenty more.
+--     InnoDB already created every one of them. Re-declaring them would add
+--     duplicate structures and change nothing. This is the review's other
+--     wrong answer: "You have a join that is often performed between a
+--     foreign key of one table and the referenced primary key of another
+--     table."
+--
+-- Players(ign), Users(email), Teams(team_name), Game(title)  -- already
+--     UNIQUE in 01_create_tables.sql, so the index exists.
+--
+-- Anything to serve Q6's ORDER BY g.title, total_kills DESC  -- total_kills
+--     is an aggregate computed after grouping; no index over base-table
+--     columns can produce it in sorted order. This is the review's third
+--     wrong answer, whose feedback reads: "An index (especially a b-tree)
+--     helps to retrieve data in sorted order, but if the data needs to be
+--     joined on another attribute first, this index probably isn't useful."
+
+
+SELECT 'indexes created' AS status
+     , COUNT(*)          AS new_indexes
+FROM information_schema.STATISTICS
+WHERE TABLE_SCHEMA = DATABASE()
+  AND INDEX_NAME IN ('idx_tx_tournament_type_amount'
+                   , 'idx_match_tournament_time'
+                   , 'idx_pms_match_player_kills');

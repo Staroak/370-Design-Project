@@ -18,7 +18,7 @@ organizers with each org's data isolated.
 - **Sprint 3**: [Plan](#plan-for-sprint-3) · [Status](#sprint-3-status) · [View catalogue](#view-catalogue)
 - **Sprint 4**: [Plan](#sprint-4-plan) · [Status](#sprint-4-status)
   - [ERD changes](#erd-changes) · [ACID audit](#acid-audit) · [ACID results](#acid-results-measured-mysql-8046) · [Durability](#durability)
-- **Sprint 5**: [Plan](#sprint-5-plan) · [Limitations](#limitations) · [Goals](#goals)
+- **Sprint 5**: [Plan](#sprint-5-plan) · [Limitations](#limitations) · [Goals](#goals) · [Status](#sprint-5-status)
 
 ## Project Schedule
 
@@ -53,6 +53,14 @@ Creating a database that helps organize creator tournaments for online games and
 | [sql/run_acid_tests.sh](sql/run_acid_tests.sh) | Replays 07 + 08; `--fixed` also applies 10 ([before](sql/acid_test_output.txt) · [after](sql/acid_test_output_fixed.txt)) |
 | [sql/run_isolation_tests.sh](sql/run_isolation_tests.sh) | Drives both sessions of 09 concurrently |
 | [sql/run_durability_tests.ps1](sql/run_durability_tests.ps1) | D1/D2/D3 crash tests — needs an elevated PowerShell |
+| [sql/11_null_tests.sql](sql/11_null_tests.sql) | Dangling-tuple evidence, with [output](sql/null_test_output.txt) |
+| [sql/12_null_fixes.sql](sql/12_null_fixes.sql) | 6 corrected views ([after](sql/null_test_output_fixed.txt)) |
+| [sql/13_bulk_data.sql](sql/13_bulk_data.sql) | Generator: grows the DB to 370,910 rows |
+| [sql/14_indexes.sql](sql/14_indexes.sql) | I/O predictions committed *before* measurement, plus 3 indexes |
+| [sql/16_query_rewrites.sql](sql/16_query_rewrites.sql) | Q7 rewritten to fix what no index could |
+| [sql/15_scalability_test.sql](sql/15_scalability_test.sql) | Basketball, tennis and golf loaded with zero DDL |
+| [3NF-Analysis.md](3NF-Analysis.md) | Closures, keys and prime attributes for all 24 relations |
+| `sql/run_null_tests.sh` · `run_index_tests.sh` · `run_scalability_test.sh` · `run_q7_rewrite_test.sh` | The Sprint 5 runners |
 | [mock-data/](mock-data/) | Source spreadsheets the mock data came from |
 
 ## Initial Functional requirements list:
@@ -533,3 +541,143 @@ on 2 of 3.
 See if our schema can handle new data such as: Basketball/tennis tournamnet. 
 Can measure success by validating if our db can process new data without modifiying our pre-existing schema
 The less we need to update our schema the more successful it'll be.
+
+
+## Sprint 5 Status
+
+Three of the four goals met their MEASURE. The fourth missed, and the reason it
+missed turned out to be the most useful thing we found this sprint.
+
+| Run | Command | Result |
+|-----|---------|--------|
+| Null safety, baseline | `bash run_null_tests.sh <pw>` | **11 GAP · 9 OK · 0 FAIL** → [null_test_output.txt](sql/null_test_output.txt) |
+| Same, after `12_null_fixes.sql` | `bash run_null_tests.sh <pw> --fixed` | **5 GAP · 16 OK · 0 FAIL** → [null_test_output_fixed.txt](sql/null_test_output_fixed.txt) |
+| Scalability | `bash run_scalability_test.sh <pw>` | **11 PASS · 13 GAP · 0 FAIL** → [scalability_test_output.txt](sql/scalability_test_output.txt) |
+| Physical design | `bash run_index_tests.sh <pw>` | **2 of 3 predictions held** → [index_test_output.txt](sql/index_test_output.txt) |
+| Q7 rewrite | `bash run_q7_rewrite_test.sh <pw>` | **70.75× fewer rows examined** → [q7_rewrite_output.txt](sql/q7_rewrite_output.txt) |
+| Durability | `.\run_durability_tests.ps1 -RootPassword <pw>` | **D1 OK · D3 OK · D2 did not reproduce** → [durability_test_output.txt](sql/durability_test_output.txt) |
+
+### Null safety
+
+**MEASURE met: 6 of 16 views dropped rows before, 0 after.**
+
+We wrote every view in Sprint 3, before the material on nulls and outer joins,
+and never audited the result. Auditing all 47 inner joins found six views losing
+rows or corrupting values, and five of the fifteen queries doing the same.
+
+The worst was `v_org_financials`, which inner-joined `Tournament` even though
+Sprint 1 explicitly allows `Transactions.tournament_id` to be NULL for org-level
+spending. It hid **12,000.00 of 26,200.00** in expenses from an admin reading
+their own profit report. `v_outstanding_payments` and Q8 dropped every debt with
+no status recorded, because `NULL <> 'paid'` is UNKNOWN rather than TRUE.
+
+Three control tests guard against over-correcting: one proves
+`v_registration_violations` **must** keep its inner join, since a naive outer
+rewrite invents 10 false violations.
+
+Q1, Q7, Q8, Q9 and Q11 have since been repaired in `03_test_queries.sql` itself,
+so the file no longer ships known-broken queries. The five query GAPs in
+`null_test_output_fixed.txt` record the defect as it stood before that repair.
+
+### Lost dependencies (3NF)
+
+**MEASURE met: L = 0.**
+
+Closures, keys and prime attributes were computed for all 24 relations. Every
+non-trivial FD is checkable on a single relation without a join, so the Sprint 2
+decomposition lost nothing and there is no BCNF-versus-3NF tradeoff to make.
+Working in [3NF-Analysis.md](3NF-Analysis.md).
+
+The audit did surface **8 BCNF violations across 4 relations**, six of them one
+defect repeated three times: an ENUM discriminator where the ERD already calls
+for subsets. We are reporting rather than fixing these, since decomposing four
+relations this late would cascade into the views, the queries and the triggers.
+
+Worth recording: **4 of the 19 triggers in `10_acid_fixes.sql` exist only
+because `tournament_id → org_id` has a non-superkey antecedent.** Normalising
+those two relations would delete all four. Sprint 4's ACID work and this
+sprint's normalisation work were chasing the same defect from opposite ends.
+
+### Physical design
+
+**MEASURE partly met: 2 of 3 predictions held, not 3. 2 of 3 queries halved,
+but only after Q7 was rewritten.**
+
+Cost was predicted with the external memory model *before* any index existed and
+committed to `14_indexes.sql`, so it could not be adjusted afterwards.
+
+| Q | Predicted | Measured |
+|---|---|---|
+| Q1 | 2.00× | **1.95×**, held |
+| Q6 | **predicted not to improve** | **no improvement**, held |
+| Q7 | 18.6× | **1.00×**, failed |
+
+Q6's entry is a prediction of failure committed in advance: with no `WHERE`
+clause and every join a PK equality, an index changes how wide a block is but
+never how many tuples an unrestricted aggregate must see.
+
+**Q7 is where we were wrong.** We assumed the MIN/MAX-by-index optimisation
+would collapse the dependent subquery to one descent. `EXPLAIN` confirms the
+index is chosen and covering, but that optimisation does not fire inside a
+`DEPENDENT SUBQUERY`, so the subquery still walks its whole range once per outer
+row. Wall clock did improve, 1,443 ms → 487 ms, because the scan became
+index-only, but our metric counts rows handed up by the storage engine, so it
+is structurally blind to a covering-index win.
+
+The defect was the *shape* of the query, not the choice of index. Computing the
+final of every tournament once, as a grouped derived table, cut rows examined
+from **502,451 to 7,102, a 70.75× reduction**, with the index unchanged, and
+returns results
+identical to the null-safe version. See
+[16_query_rewrites.sql](sql/16_query_rewrites.sql).
+
+One stated premise of our own plan was also wrong. We wrote that
+`01_create_tables.sql` declares 0 indexes and concluded MySQL would scan
+everything. The database in fact carries about **62 indexes**: 24 primary keys,
+14 UNIQUEs, and 24 that InnoDB creates silently on foreign-key child columns.
+
+### Scalability
+
+**MEASURE met: three new sports, 268 rows, zero DDL.**
+
+Basketball, tennis (singles and doubles in one draw) and golf (16-player field,
+cut to 8) were loaded into the unmodified schema. `S0` fingerprints the schema
+before any new row exists and `S26` recomputes it, identical both times at
+26 tables / 254 columns / 96 constraints / 19 triggers / 16 views.
+`v_public_standings` ranked the golf field in exact stroke order without being
+redefined. The Sprint 3 `Competitor` / `MatchParticipant` generalisation is what
+earns this.
+
+Of 19 defects found, **10 need only a view change, 1 is a deletion, and none
+needs a new table.** Everything that broke is what Sprint 3 did not touch:
+
+- **`MatchParticipant.points` has no declared direction.** Its meaning lives only
+  inside `ORDER BY SUM(points) DESC`. Loading golf strokes is the natural move
+  and `CHECK (points >= 0)` accepts them, and the leaderboard then comes back
+  exactly upside down, crowning last place, with no error and no warning.
+- **`Payments` cannot pay a solo competitor**, since `payee_type` is
+  `ENUM('staff','team')`. Not a new-sport problem: **4 tournaments and 79,000.00
+  of prize money already in our data have no representable payee**, including our
+  own Sprint 3 events.
+
+### Durability
+
+The three crash tests deferred from Sprint 4 have now been run in an elevated
+shell, with `mysqld` hard-killed via `Stop-Process -Force`.
+
+| # | Test | Expected | Result |
+|---|------|----------|--------|
+| D1 | commit, hard-kill, restart | row survives | **OK**, redo log replay |
+| D2 | same with `innodb_flush_log_at_trx_commit = 0` | row lost | **did not reproduce** |
+| D3 | insert without committing, hard-kill | row absent | **OK**, undo log at recovery |
+
+D2 was re-run four times and the row survived every time. At setting 0 the log
+still flushes roughly once a second, so the kill never landed inside the
+unflushed window on our hardware. We are recording what we observed rather than
+what we expected. `D2-RESET` confirms the relaxation was never persisted.
+
+## Future Plans
+- Normalize the 4 tables with BCNF violations and delete the triggers that only exist to compensate for them
+- Widen payments so a solo competitor can be paid
+- Add direction flag so the database knows whether a high or low score wins
+- Add a frontend UI
