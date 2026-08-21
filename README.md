@@ -683,3 +683,22 @@ what we expected. `D2-RESET` confirms the relaxation was never persisted.
 
 
 - END OF PROJECT FOR SEMESTER
+
+---
+
+## Post-semester: UI readiness
+
+Everything below was added after the final submission, in preparation for the
+frontend UI. The graded files above are unchanged; the new work is layered on top.
+
+| File | What it is |
+|------|------------|
+| [sql/17_ui_readiness.sql](sql/17_ui_readiness.sql) | Schema layer: bracket structure on `Match` (`round`, `bracket_slot`), `payee_type='player'` so solo competitors can be paid, `Tournament.score_direction` (the golf finding), `Creators.display_name`, `Teams.captain_user_id`, status vocabulary CHECK, extended payment triggers, updated views + new `v_public_bracket` |
+| [sql/18_ui_seed_fill.sql](sql/18_ui_seed_fill.sql) | Data layer: bracket positions for all 15 seed matches, player/team profile fills, a **live** and an **upcoming** tournament, solo-player prize payouts, creator names, captain links |
+| [sql/run_ui_setup.sh](sql/run_ui_setup.sh) | Rebuilds the UI-ready database end to end and smoke-tests every closed gap → `ui_setup_output.txt` |
+| [UI_HANDOFF.md](UI_HANDOFF.md) | The database↔frontend contract: screens → views mapping, bracket rendering rules, vocabularies, auth strategy |
+
+This closes three of the four Future Plans (solo payouts, score direction, and the
+groundwork for the frontend UI). The BCNF normalization stays deliberately open —
+nothing UI-facing needs it, and Sprint 5 documented why decomposing those four
+relations would cascade into the views, queries and triggers.
