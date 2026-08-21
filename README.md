@@ -679,3 +679,7 @@ what we expected. `D2-RESET` confirms the relaxation was never persisted.
 - Widen payments so a solo competitor can be paid
 - Add direction flag so the database knows whether a high or low score wins
 - Add a frontend UI
+
+
+
+- END OF PROJECT FOR SEMESTER
