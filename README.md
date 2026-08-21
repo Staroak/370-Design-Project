@@ -59,7 +59,6 @@ Creating a database that helps organize creator tournaments for online games and
 | [sql/14_indexes.sql](sql/14_indexes.sql) | I/O predictions committed *before* measurement, plus 3 indexes |
 | [sql/16_query_rewrites.sql](sql/16_query_rewrites.sql) | Q7 rewritten to fix what no index could |
 | [sql/15_scalability_test.sql](sql/15_scalability_test.sql) | Basketball, tennis and golf loaded with zero DDL |
-| [3NF-Analysis.md](3NF-Analysis.md) | Closures, keys and prime attributes for all 24 relations |
 | `sql/run_null_tests.sh` · `run_index_tests.sh` · `run_scalability_test.sh` · `run_q7_rewrite_test.sh` | The Sprint 5 runners |
 | [mock-data/](mock-data/) | Source spreadsheets the mock data came from |
 
@@ -586,7 +585,6 @@ so the file no longer ships known-broken queries. The five query GAPs in
 Closures, keys and prime attributes were computed for all 24 relations. Every
 non-trivial FD is checkable on a single relation without a join, so the Sprint 2
 decomposition lost nothing and there is no BCNF-versus-3NF tradeoff to make.
-Working in [3NF-Analysis.md](3NF-Analysis.md).
 
 The audit did surface **8 BCNF violations across 4 relations**, six of them one
 defect repeated three times: an ENUM discriminator where the ERD already calls
