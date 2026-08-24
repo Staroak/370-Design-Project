@@ -12,6 +12,97 @@ export const TEAMS = {
   8: 'Roku Nana',
 };
 
+export const TEAM_META = {
+  1: { captain: 'milkteaboards', founded: 'OCT 08 2025', region: 'NA' },
+  2: { captain: 'almondfps', founded: 'OCT 15 2025', region: 'NA' },
+  3: { captain: 'kaleiydo', founded: 'OCT 22 2025', region: 'NA' },
+  4: { captain: 'ttinybones', founded: 'OCT 29 2025', region: 'NA' },
+  5: { captain: 'hamouduh', founded: 'NOV 05 2025', region: 'NA' },
+  6: { captain: 'daeunnie', founded: 'NOV 12 2025', region: 'NA' },
+  7: { captain: 'oniaura', founded: 'NOV 19 2025', region: 'NA' },
+  8: { captain: 'jarebeartv', founded: 'NOV 26 2025', region: 'NA' },
+};
+
+const SEED_TEAM_NAMES = { ...TEAMS };
+
+export const CREATORS = [
+  { id: 1, name: 'revrzd', twitch: 'twitch.tv/revrzd', instagram: '', twitter: '', pic: '' },
+  { id: 2, name: 'almondfps', twitch: '', instagram: 'instagram.com/almondfps', twitter: '', pic: '' },
+  { id: 3, name: 'JareBear', twitch: '', instagram: '', twitter: 'twitter.com/jarebeartv', pic: '' },
+  { id: 4, name: 'nova_flux', twitch: 'twitch.tv/nova_flux', instagram: 'instagram.com/nova_flux', twitter: '', pic: '' },
+  { id: 5, name: 'PixelPerry', twitch: '', instagram: 'instagram.com/pixelperry', twitter: '', pic: '' },
+  { id: 6, name: 'GhostOfLobbyB', twitch: '', instagram: '', twitter: 'twitter.com/ghostoflobbyb', pic: '' },
+  { id: 7, name: 'QueenQuince', twitch: 'twitch.tv/queenquince', instagram: '', twitter: '', pic: '' },
+  { id: 8, name: 'mothlamp', twitch: '', instagram: 'instagram.com/mothlamp', twitter: 'twitter.com/mothlamp', pic: '' },
+  { id: 9, name: 'RiftRaccoon', twitch: '', instagram: '', twitter: 'twitter.com/riftraccoon', pic: '' },
+  { id: 10, name: 'saltcircuit', twitch: 'twitch.tv/saltcircuit', instagram: '', twitter: '', pic: '' },
+  { id: 11, name: 'DrDelusion', twitch: '', instagram: 'instagram.com/drdelusion', twitter: '', pic: '' },
+  { id: 12, name: 'CozyKumo', twitch: 'twitch.tv/cozykumo', instagram: '', twitter: 'twitter.com/cozykumo', pic: '' },
+  { id: 13, name: 'blinkfrog', twitch: 'twitch.tv/blinkfrog', instagram: '', twitter: '', pic: '' },
+  { id: 14, name: 'TiltProof_Tia', twitch: '', instagram: 'instagram.com/tiltproof_tia', twitter: '', pic: '' },
+  { id: 15, name: 'VandalVera', twitch: '', instagram: '', twitter: 'twitter.com/vandalvera', pic: '' },
+  { id: 16, name: 'LowTierLuke', twitch: 'twitch.tv/lowtierluke', instagram: 'instagram.com/lowtierluke', twitter: '', pic: '' },
+  { id: 17, name: 'MangoMouse', twitch: '', instagram: 'instagram.com/mangomouse', twitter: '', pic: '' },
+  { id: 18, name: 'aim_gremlin', twitch: '', instagram: '', twitter: 'twitter.com/aim_gremlin', pic: '' },
+  { id: 19, name: 'SleeplessSachi', twitch: 'twitch.tv/sleeplesssachi', instagram: '', twitter: '', pic: '' },
+  { id: 20, name: 'TurboTurnip', twitch: '', instagram: 'instagram.com/turboturnip', twitter: 'twitter.com/turboturnip', pic: '' },
+  { id: 21, name: 'hexadecimal_hana', twitch: '', instagram: '', twitter: 'twitter.com/hexadecimal_hana', pic: '' },
+  { id: 22, name: 'ClutchCactus', twitch: 'twitch.tv/clutchcactus', instagram: '', twitter: '', pic: '' },
+  { id: 23, name: 'PeachPetrichor', twitch: '', instagram: 'instagram.com/peachpetrichor', twitter: '', pic: '' },
+  { id: 24, name: 'wafflewizard', twitch: 'twitch.tv/wafflewizard', instagram: '', twitter: 'twitter.com/wafflewizard', pic: '' },
+  { id: 25, name: 'MidnightMori', twitch: 'twitch.tv/midnightmori', instagram: '', twitter: '', pic: '' },
+  { id: 26, name: 'opal_owl', twitch: '', instagram: 'instagram.com/opal_owl', twitter: '', pic: '' },
+  { id: 27, name: 'ReloadRhea', twitch: '', instagram: '', twitter: 'twitter.com/reloadrhea', pic: '' },
+  { id: 28, name: 'StaticStorm', twitch: 'twitch.tv/staticstorm', instagram: 'instagram.com/staticstorm', twitter: '', pic: '' },
+  { id: 29, name: 'chaikappa', twitch: '', instagram: 'instagram.com/chaikappa', twitter: '', pic: '' },
+  { id: 30, name: 'NoScopeNori', twitch: '', instagram: '', twitter: 'twitter.com/noscopenori', pic: '' },
+  { id: 31, name: 'VelvetViper', twitch: 'twitch.tv/velvetviper', instagram: '', twitter: '', pic: '' },
+  { id: 32, name: 'brickbybrick', twitch: '', instagram: 'instagram.com/brickbybrick', twitter: 'twitter.com/brickbybrick', pic: '' },
+  { id: 33, name: 'LagSpikeLarry', twitch: '', instagram: '', twitter: 'twitter.com/lagspikelarry', pic: '' },
+  { id: 34, name: 'CtrlAltDefeat', twitch: 'twitch.tv/ctrlaltdefeat', instagram: '', twitter: '', pic: '' },
+  { id: 35, name: 'moon_moth_mia', twitch: '', instagram: 'instagram.com/moon_moth_mia', twitter: '', pic: '' },
+  { id: 36, name: 'RoundhouseRiko', twitch: 'twitch.tv/roundhouseriko', instagram: '', twitter: 'twitter.com/roundhouseriko', pic: '' },
+  { id: 37, name: 'sagemain_sam', twitch: 'twitch.tv/sagemain_sam', instagram: '', twitter: '', pic: '' },
+  { id: 38, name: 'DumpsterDiveDee', twitch: '', instagram: 'instagram.com/dumpsterdivedee', twitter: '', pic: '' },
+  { id: 39, name: 'frostbyte_fi', twitch: '', instagram: '', twitter: 'twitter.com/frostbyte_fi', pic: '' },
+  { id: 40, name: 'EcoRoundEcho', twitch: 'twitch.tv/ecoroundecho', instagram: 'instagram.com/ecoroundecho', twitter: '', pic: '' },
+  { id: 41, name: 'plinko_pilot', twitch: '', instagram: 'instagram.com/plinko_pilot', twitter: '', pic: '' },
+  { id: 42, name: 'WardenWisp', twitch: '', instagram: '', twitter: 'twitter.com/wardenwisp', pic: '' },
+  { id: 43, name: 'tofu_tempest', twitch: 'twitch.tv/tofu_tempest', instagram: '', twitter: '', pic: '' },
+  { id: 44, name: 'GlimmerGoat', twitch: '', instagram: 'instagram.com/glimmergoat', twitter: 'twitter.com/glimmergoat', pic: '' },
+  { id: 45, name: 'ProxyPigeon', twitch: '', instagram: '', twitter: 'twitter.com/proxypigeon', pic: '' },
+  { id: 46, name: 'slowmo_sloth', twitch: 'twitch.tv/slowmo_sloth', instagram: '', twitter: '', pic: '' },
+  { id: 47, name: 'KDA_Karma', twitch: '', instagram: 'instagram.com/kda_karma', twitter: '', pic: '' },
+  { id: 48, name: 'NebulaNessa', twitch: 'twitch.tv/nebulanessa', instagram: '', twitter: 'twitter.com/nebulanessa', pic: '' },
+  { id: 49, name: 'quietquasar', twitch: 'twitch.tv/quietquasar', instagram: '', twitter: '', pic: '' },
+  { id: 50, name: 'BaronBaited', twitch: '', instagram: 'instagram.com/baronbaited', twitter: '', pic: '' },
+  { id: 51, name: 'static_shanty', twitch: '', instagram: '', twitter: 'twitter.com/static_shanty', pic: '' },
+  { id: 52, name: 'OrbitalOtter', twitch: 'twitch.tv/orbitalotter', instagram: 'instagram.com/orbitalotter', twitter: '', pic: '' },
+];
+
+export const CREATOR_ASSIGNMENTS = [
+  { creatorId: 1, code: 'CC', role: 'streamer', rate: 500, status: 'active' },
+  { creatorId: 2, code: 'CC', role: 'host', rate: 400, status: 'active' },
+  { creatorId: 3, code: 'WC', role: 'streamer', rate: 350, status: 'active' },
+  { creatorId: 1, code: 'SS', role: 'streamer', rate: 450, status: 'active' },
+  { creatorId: 5, code: 'CC', role: 'caster', rate: 250, status: 'active' },
+  { creatorId: 9, code: 'SS', role: 'observer', rate: 150, status: 'active' },
+  { creatorId: 12, code: 'WC', role: 'host', rate: 300, status: 'active' },
+  { creatorId: 15, code: 'TF', role: 'streamer', rate: 400, status: 'active' },
+  { creatorId: 18, code: 'RL', role: 'caster', rate: 200, status: 'active' },
+  { creatorId: 22, code: 'SS', role: 'streamer', rate: 350, status: 'active' },
+  { creatorId: 27, code: 'FI', role: 'streamer', rate: 300, status: 'active' },
+  { creatorId: 31, code: 'CC', role: 'observer', rate: 150, status: 'active' },
+  { creatorId: 36, code: 'TF', role: 'host', rate: 250, status: 'active' },
+  { creatorId: 44, code: 'FI', role: 'caster', rate: 275, status: 'active' },
+];
+
+export const GAMES = {
+  valorant: { name: 'Valorant', label: 'VALORANT', codes: ['CC', 'WC', 'SS', 'FI'] },
+  tft: { name: 'Teamfight Tactics', label: 'TEAMFIGHT TACTICS', codes: ['TF'] },
+  rl: { name: 'Rocket League', label: 'ROCKET LEAGUE', codes: ['RL'] },
+};
+
 // player id -> [ign, teamId, jersey]
 export const PLAYERS = {
   1: ['aus#MTB', 1, 1], 2: ['xixi#0830', 1, 2], 3: ['carp#444', 1, 3], 4: ['Sleepy Femboy#rawr', 1, 4], 5: ['madge#koow', 1, 5],
@@ -22,7 +113,11 @@ export const PLAYERS = {
   30: ['ekittenuwuboy67#lumei', 6, 1], 31: ['happycamper#1018', 6, 2], 32: ['laki#plays', 6, 3], 33: ['juicebox#kitty', 6, 4], 34: ['silly penguin13#dae', 6, 5],
   35: ['oni#AURAA', 7, 1], 36: ['Colt#GGTTV', 7, 2], 37: ['Rocke#813', 7, 3], 38: ['Kairu#1473', 7, 4], 39: ['icarus 407#VGS47', 7, 5], 40: ['sig too clean#ttv', 7, 6], 41: ['chuwy#kiki', 7, 7],
   42: ['JareBear#TTV', 8, 1], 43: ['dberg#omen', 8, 2], 44: ['versi#nat', 8, 3], 45: ['lil chicken wrap#ranch', 8, 4], 46: ['BIG PT#OTOWN', 8, 5],
+  47: ['Setsuko#TFT', 0, 0], 48: ['kiyoomi#EUW', 0, 0], 49: ['Rerolla#NA1', 0, 0], 50: ['Augment#0001', 0, 0], 51: ['TinyLegend#tft', 0, 0],
+  52: ['Carousel#spin', 0, 0], 53: ['Fortune#4win', 0, 0], 54: ['HyperRoll#top4', 0, 0], 55: ['Jstn1v1#RL', 0, 0], 56: ['Firstkiller#duel', 0, 0],
 };
+
+const SEED_IGNS = Object.fromEntries(Object.entries(PLAYERS).map(([id, p]) => [id, p[0]]));
 
 // Constellation glyphs: pts in a 40x40 box, edges as index chains, gold = index
 export const TOURNAMENTS = [
@@ -30,6 +125,7 @@ export const TOURNAMENTS = [
     code: 'SS', name: 'MTB Summer Skirmish', game: 'Valorant', format: 'elim',
     formatLabel: 'SINGLE ELIMINATION', status: 'live', prize: '4,000',
     dates: 'AUG 20–23 2026', month: 'AUG 2026', size: '4 TEAMS',
+    field: [1, 2, 4, 7],
     champion: null, note: 'Final · Sahurs vs Harmony',
     glyph: { pts: [[8, 30], [16, 10], [23, 20], [32, 6]], gold: 3 },
   },
@@ -37,6 +133,7 @@ export const TOURNAMENTS = [
     code: 'FI', name: 'MTB Fall Invitational', game: 'Valorant', format: 'elim',
     formatLabel: 'SINGLE ELIMINATION', status: 'upcoming', prize: '3,000',
     dates: 'SEP 12–13 2026', month: 'SEP 2026', size: '4 TEAMS',
+    field: [3, 5, 6, 8],
     champion: null, note: '4 teams registered',
     glyph: { pts: [[8, 32], [18, 24], [24, 14], [34, 6]], gold: 3 },
   },
@@ -74,6 +171,13 @@ export const TOURNAMENTS = [
     championPrize: '1,000 FIRST PRIZE · PAID',
     glyph: { pts: [[8, 20], [32, 20]], gold: 0 },
   },
+];
+
+export const NEW_GLYPHS = [
+  { pts: [[7, 28], [14, 12], [25, 9], [33, 25]], gold: 2 },
+  { pts: [[9, 9], [17, 26], [26, 15], [32, 32]], gold: 1 },
+  { pts: [[6, 20], [15, 7], [22, 18], [30, 10], [34, 29]], gold: 3 },
+  { pts: [[8, 31], [13, 15], [21, 25], [28, 8], [35, 21]], gold: 0 },
 ];
 
 // Matches. sides: [[name, score], [name, score]] with winner first, or null when
@@ -125,18 +229,6 @@ export const MATCHES = [
   { id: 19, t: 'FI', round: 1, slot: 1, time: 'SEP 12 · 15:00', sides: null },
   { id: 20, t: 'FI', round: 1, slot: 2, time: 'SEP 12 · 18:00', sides: null },
   { id: 21, t: 'FI', round: 2, slot: 1, time: 'SEP 13 · 17:00', sides: null },
-];
-
-// TFT classification: [pos, ign, l1, l2, pts, gap, int, note]
-export const TFT_STANDINGS = [
-  [1, 'Setsuko#TFT', 1, 2, 15, null, null, 'CHAMPION'],
-  [2, 'Rerolla#NA1', 3, 1, 14, -1, -1, null],
-  [3, 'kiyoomi#EUW', 2, 4, 12, -3, -2, null],
-  [4, 'TinyLegend#tft', 5, 3, 10, -5, -2, null],
-  [5, 'Augment#0001', 4, 6, 8, -7, -2, null],
-  [6, 'HyperRoll#top4', 8, 5, 5, -10, -3, 'TIE ON PTS · BEST FINISH'],
-  [7, 'Carousel#spin', 6, 7, 5, -10, 0, null],
-  [8, 'Fortune#4win', 7, 8, 3, -12, -2, null],
 ];
 
 // Admin data, mirrored from Transactions / Payments / Membership seed rows.
@@ -192,10 +284,10 @@ export const DELIVERABLES = [
 export const INTEGRITY = {
   violations: [],
   matchIssues: [
-    ['SS-F', 'MTB Summer Skirmish', 'AUG 23 · 18:00', 'no participants recorded'],
-    ['FI-SF1', 'MTB Fall Invitational', 'SEP 12 · 15:00', 'no participants recorded'],
-    ['FI-SF2', 'MTB Fall Invitational', 'SEP 12 · 18:00', 'no participants recorded'],
-    ['FI-F', 'MTB Fall Invitational', 'SEP 13 · 17:00', 'no participants recorded'],
+    ['GRAND FINAL', 'MTB Summer Skirmish', 'AUG 23 · 18:00', 'no participants recorded'],
+    ['SEMIFINAL 1', 'MTB Fall Invitational', 'SEP 12 · 15:00', 'no participants recorded'],
+    ['SEMIFINAL 2', 'MTB Fall Invitational', 'SEP 12 · 18:00', 'no participants recorded'],
+    ['GRAND FINAL', 'MTB Fall Invitational', 'SEP 13 · 17:00', 'no participants recorded'],
   ],
   cleanMatches: 17,
 };
@@ -234,6 +326,650 @@ export const PORTAL = {
     ],
   },
 };
+
+const STORE_KEY = 'star-tournaments-demo-v2';
+
+function emptyStore() {
+  return {
+    results: {},
+    created: [],
+    creators: null,
+    creatorAssignments: null,
+    playerCheckins: {},
+    streams: {},
+    eventEdits: {},
+    matchTimes: {},
+    teamEdits: {},
+    playerEdits: {},
+  };
+}
+
+function cleanStore(value) {
+  return {
+    results: value && value.results && typeof value.results === 'object' ? value.results : {},
+    created: Array.isArray(value && value.created) ? value.created : [],
+    creators: Array.isArray(value && value.creators) ? value.creators : null,
+    creatorAssignments: Array.isArray(value && value.creatorAssignments) ? value.creatorAssignments : null,
+    playerCheckins: value && value.playerCheckins && typeof value.playerCheckins === 'object' ? value.playerCheckins : {},
+    streams: value && value.streams && typeof value.streams === 'object' ? value.streams : {},
+    eventEdits: value && value.eventEdits && typeof value.eventEdits === 'object' ? value.eventEdits : {},
+    matchTimes: value && value.matchTimes && typeof value.matchTimes === 'object' ? value.matchTimes : {},
+    teamEdits: value && value.teamEdits && typeof value.teamEdits === 'object' ? value.teamEdits : {},
+    playerEdits: value && value.playerEdits && typeof value.playerEdits === 'object' ? value.playerEdits : {},
+  };
+}
+
+function loadStore() {
+  try {
+    const raw = globalThis.localStorage && globalThis.localStorage.getItem(STORE_KEY);
+    return raw ? cleanStore(JSON.parse(raw)) : emptyStore();
+  } catch {
+    return emptyStore();
+  }
+}
+
+let store = loadStore();
+const playerCheckins = store.playerCheckins;
+
+function saveStore() {
+  try {
+    if (globalThis.localStorage) globalThis.localStorage.setItem(STORE_KEY, JSON.stringify(store));
+  } catch {
+    // Storage can be blocked; the mutable arrays still carry this session.
+  }
+}
+
+function syncCompetitorName(oldName, newName) {
+  if (!oldName || !newName || oldName === newName) return;
+  TOURNAMENTS.forEach((t) => {
+    if (t.champion === oldName) t.champion = newName;
+  });
+  MATCHES.forEach((m) => {
+    if (m.lobby) {
+      m.lobby.forEach((row) => {
+        if (row[0] === oldName) row[0] = newName;
+      });
+    }
+    if (m.solo) {
+      m.solo.forEach((side) => {
+        if (side[0] === oldName) side[0] = newName;
+      });
+    }
+  });
+}
+
+function hasAngleText(values) {
+  return values.some((value) => /[<>]/.test(String(value || '')));
+}
+
+export function storeSnapshot() {
+  return store;
+}
+
+export function tftStandings(code = 'TF') {
+  const event = TOURNAMENTS.find((t) => t.code === code);
+  const rounds = MATCHES
+    .filter((m) => m.t === code && m.lobby)
+    .slice()
+    .sort((a, b) => a.round - b.round);
+  const players = new Map();
+
+  rounds.forEach((m, roundIndex) => {
+    m.lobby.forEach(([ign, placement, points]) => {
+      const row = players.get(ign) || { ign, placements: [], points: 0 };
+      row.placements[roundIndex] = placement;
+      row.points += Number(points) || 0;
+      players.set(ign, row);
+    });
+  });
+
+  const pidForIgn = (ign) => {
+    const hit = Object.entries(PLAYERS).find(([, p]) => p[0] === ign);
+    return hit ? Number(hit[0]) : null;
+  };
+  const bestFinish = (row) => Math.min(...row.placements.filter((placement) => placement != null));
+  const sorted = [...players.values()].sort((a, b) => {
+    const pointOrder = b.points - a.points;
+    if (pointOrder) return pointOrder;
+    const finishOrder = bestFinish(a) - bestFinish(b);
+    if (finishOrder) return finishOrder;
+    return a.ign.localeCompare(b.ign, undefined, { sensitivity: 'base' });
+  });
+  const leaderPts = sorted.length ? sorted[0].points : 0;
+
+  return sorted.map((row, index) => {
+    const previous = sorted[index - 1];
+    const next = sorted[index + 1];
+    const note = index === 0 && event && event.status === 'completed'
+      ? 'CHAMPION'
+      : next && next.points === row.points
+        ? 'TIE ON PTS · BEST FINISH'
+        : null;
+    return [
+      index + 1,
+      row.ign,
+      row.placements[0] ?? null,
+      row.placements[1] ?? null,
+      row.points,
+      index === 0 ? null : row.points - leaderPts,
+      index === 0 ? null : row.points - previous.points,
+      note,
+      pidForIgn(row.ign),
+    ];
+  });
+}
+
+export function streamFor(code) {
+  return String(store.streams[String(code || '').trim()] || '');
+}
+
+export function setStream(code, raw) {
+  const cleanCode = String(code || '').trim();
+  let channel = String(raw || '').trim();
+  channel = channel.replace(/^https?:\/\//i, '');
+  channel = channel.replace(/^www\./i, '');
+  channel = channel.replace(/^twitch\.tv\//i, '');
+  channel = channel.split(/[?#]/)[0].replace(/\/+$/g, '').trim();
+
+  if (!channel) {
+    delete store.streams[cleanCode];
+    saveStore();
+    return { ok: true, channel: '' };
+  }
+
+  if (!/^[A-Za-z0-9_]{3,25}$/.test(channel)) {
+    return { ok: false, error: 'not a valid twitch channel' };
+  }
+
+  store.streams[cleanCode] = channel;
+  saveStore();
+  return { ok: true, channel };
+}
+
+export function saveEventEdit(code, fields) {
+  const cleanCode = String(code || '').trim();
+  const event = TOURNAMENTS.find((t) => t.code === cleanCode);
+  if (!event) return { ok: false, error: 'event not found' };
+
+  const name = String(fields && fields.name || '').trim();
+  const prizeRaw = String(fields && fields.prize || '').replace(/[,\s]/g, '');
+  const prizeNumber = Number(prizeRaw);
+  const dates = String(fields && fields.dates || '').trim();
+  const note = String(fields && fields.note || '').trim();
+  const championMeta = String(fields && fields.championMeta || '').trim();
+  const championPrize = String(fields && fields.championPrize || '').trim();
+  if (hasAngleText([name, dates, note, championMeta, championPrize])) return { ok: false, error: 'text cannot contain < or >' };
+  if (!name) return { ok: false, error: 'name required' };
+  if (!Number.isInteger(prizeNumber) || prizeNumber < 0) return { ok: false, error: 'prize must be a nonnegative number' };
+  if (!dates) return { ok: false, error: 'dates required' };
+
+  const dateTokens = dates.split(/\s+/);
+  const saved = {
+    name,
+    prize: prizeNumber.toLocaleString('en-US'),
+    dates,
+    month: `${dateTokens[0]} ${dateTokens[dateTokens.length - 1]}`,
+    note,
+    championMeta,
+    championPrize,
+  };
+  Object.assign(event, saved);
+  store.eventEdits[cleanCode] = saved;
+  saveStore();
+  return { ok: true };
+}
+
+export function saveMatchTime(id, time) {
+  const matchId = Number(id);
+  const m = MATCHES.find((x) => x.id === matchId);
+  if (!m) return { ok: false, error: 'match not found' };
+  const cleanTime = String(time || '').trim();
+  if (!cleanTime) return { ok: false, error: 'time required' };
+  m.time = cleanTime;
+  store.matchTimes[String(matchId)] = cleanTime;
+  saveStore();
+  return { ok: true };
+}
+
+export function saveTeamEdit(teamId, fields) {
+  const id = Number(teamId);
+  if (!TEAMS[id]) return { ok: false, error: 'team not found' };
+  const name = String(fields && fields.name || '').trim();
+  const captain = String(fields && fields.captain || '').trim();
+  const founded = String(fields && fields.founded || '').trim();
+  const region = String(fields && fields.region || '').trim();
+  if (hasAngleText([name, captain, founded, region])) return { ok: false, error: 'text cannot contain < or >' };
+  if (!name) return { ok: false, error: 'name required' };
+  if (!captain || !founded || !region) return { ok: false, error: 'all fields required' };
+  const lower = name.toLowerCase();
+  const duplicate = Object.entries(TEAMS).some(([otherId, otherName]) => Number(otherId) !== id && String(otherName).toLowerCase() === lower);
+  if (duplicate) return { ok: false, error: 'team name already in use' };
+
+  const oldName = TEAMS[id];
+  TEAMS[id] = name;
+  TEAM_META[id] = { ...(TEAM_META[id] || {}), captain, founded, region };
+  syncCompetitorName(oldName, name);
+  store.teamEdits[String(id)] = { name, captain, founded, region };
+  saveStore();
+  return { ok: true };
+}
+
+export function savePlayerEdit(pid, fields) {
+  const id = Number(pid);
+  const player = PLAYERS[id];
+  if (!player) return { ok: false, error: 'player not found' };
+  const ign = String(fields && fields.ign || '').trim();
+  if (hasAngleText([ign])) return { ok: false, error: 'text cannot contain < or >' };
+  if (!ign) return { ok: false, error: 'ign required' };
+  const lower = ign.toLowerCase();
+  const duplicate = Object.entries(PLAYERS).some(([otherId, otherPlayer]) => Number(otherId) !== id && String(otherPlayer[0]).toLowerCase() === lower);
+  if (duplicate) return { ok: false, error: 'ign already in use' };
+
+  let jersey = 0;
+  if (player[1] > 0) {
+    jersey = Number(fields && fields.jersey);
+    if (!Number.isInteger(jersey) || jersey < 1 || jersey > 99) return { ok: false, error: 'jersey must be 1 to 99' };
+  }
+
+  const oldIgn = player[0];
+  player[0] = ign;
+  player[2] = jersey;
+  syncCompetitorName(oldIgn, ign);
+  store.playerEdits[String(id)] = { ign, jersey };
+  saveStore();
+  return { ok: true };
+}
+
+function persistCreators() {
+  store.creators = CREATORS.map((creator) => ({ ...creator }));
+  store.creatorAssignments = CREATOR_ASSIGNMENTS.map((assignment) => ({ ...assignment }));
+  saveStore();
+}
+
+function eventMatches(code) {
+  return MATCHES.filter((m) => m.t === code);
+}
+
+function sessionLong(t, m) {
+  if (t.format === 'series') return `GAME ${m.round}`;
+  if (t.format === 'points') return `LOBBY ${m.round}`;
+  const maxR = Math.max(...eventMatches(t.code).map((x) => x.round));
+  if (m.round === maxR) return 'GRAND FINAL';
+  if (m.round === maxR - 1) return `SEMIFINAL ${m.slot}`;
+  return `QUARTERFINAL ${m.slot}`;
+}
+
+function feederMatches(ms, m) {
+  const prev = ms.filter((x) => x.round === m.round - 1).sort((a, b) => a.slot - b.slot);
+  const samePath = prev.filter((x) => Math.ceil(x.slot / 2) === m.slot);
+  return samePath.length ? samePath : prev;
+}
+
+function eligibleFor(m) {
+  const t = TOURNAMENTS.find((x) => x.code === m.t);
+  if (!t || t.format !== 'elim' || m.sides !== null) return [];
+  const ms = eventMatches(t.code);
+  if (m.round === 1) {
+    const used = new Set();
+    ms
+      .filter((x) => x.round === 1 && x.id !== m.id && x.sides)
+      .forEach((x) => x.sides.forEach(([teamId]) => used.add(teamId)));
+    return (t.field || []).filter((teamId) => !used.has(teamId));
+  }
+  const feeders = feederMatches(ms, m);
+  if (!feeders.length || feeders.some((x) => !x.sides)) return [];
+  return feeders.map((x) => x.sides[0][0]);
+}
+
+function reconcileElimTournaments() {
+  TOURNAMENTS.filter((t) => t.format === 'elim' && eventMatches(t.code).length).forEach((t) => {
+    const ms = eventMatches(t.code);
+    const maxR = Math.max(...ms.map((m) => m.round));
+    const final = ms.find((m) => m.round === maxR);
+    const anyPlayed = ms.some((m) => m.sides);
+
+    if (final && final.sides) {
+      const edit = store.eventEdits[t.code] || {};
+      t.status = 'completed';
+      t.champion = TEAMS[final.sides[0][0]];
+      if (!edit.championMeta && !t.championMeta) t.championMeta = 'RESULT ENTERED IN THE ADMIN CONSOLE';
+      if (!edit.note) t.note = 'Champion · ' + t.champion;
+    } else if (anyPlayed) {
+      t.status = 'live';
+      t.note = 'In progress';
+    }
+
+    ms.filter((m) => m.round > 1 && !m.sides).forEach((m) => {
+      const feeders = feederMatches(ms, m);
+      if (feeders.length === 2 && feeders.every((x) => x.sides)) {
+        m.hint = feeders.map((x) => TEAMS[x.sides[0][0]]).join(' vs ');
+      }
+    });
+  });
+}
+
+function applyOverrides() {
+  if (Array.isArray(store.creators)) {
+    CREATORS.length = 0;
+    CREATORS.push(...store.creators.map((creator) => ({
+      id: Number(creator.id),
+      name: String(creator.name || ''),
+      twitch: String(creator.twitch || ''),
+      instagram: String(creator.instagram || ''),
+      twitter: String(creator.twitter || ''),
+      pic: String(creator.pic || ''),
+    })));
+  }
+
+  if (Array.isArray(store.creatorAssignments)) {
+    CREATOR_ASSIGNMENTS.length = 0;
+    CREATOR_ASSIGNMENTS.push(...store.creatorAssignments.map((assignment) => ({
+      creatorId: Number(assignment.creatorId),
+      code: String(assignment.code || ''),
+      role: String(assignment.role || ''),
+      rate: Number(assignment.rate),
+      status: String(assignment.status || 'active'),
+    })));
+  }
+
+  store.created.forEach((entry) => {
+    if (entry && entry.tournament) TOURNAMENTS.splice(1, 0, entry.tournament);
+    if (entry && Array.isArray(entry.matches)) MATCHES.push(...entry.matches);
+  });
+
+  Object.entries(store.results).forEach(([id, sides]) => {
+    const m = MATCHES.find((x) => x.id === Number(id));
+    if (m) {
+      m.sides = sides;
+      delete m.hint;
+    }
+  });
+
+  Object.entries(store.teamEdits).forEach(([teamId, edit]) => {
+    const id = Number(teamId);
+    if (!TEAMS[id] || !edit) return;
+    const newName = String(edit.name || TEAMS[id]);
+    TEAMS[id] = newName;
+    TEAM_META[id] = {
+      ...(TEAM_META[id] || {}),
+      captain: String(edit.captain || (TEAM_META[id] && TEAM_META[id].captain) || ''),
+      founded: String(edit.founded || (TEAM_META[id] && TEAM_META[id].founded) || ''),
+      region: String(edit.region || (TEAM_META[id] && TEAM_META[id].region) || ''),
+    };
+    syncCompetitorName(SEED_TEAM_NAMES[id], newName);
+  });
+
+  Object.entries(store.playerEdits).forEach(([pid, edit]) => {
+    const id = Number(pid);
+    const player = PLAYERS[id];
+    if (!player || !edit) return;
+    const newIgn = String(edit.ign || player[0]);
+    player[0] = newIgn;
+    player[2] = Number(edit.jersey);
+    syncCompetitorName(SEED_IGNS[id], newIgn);
+  });
+
+  Object.entries(store.eventEdits).forEach(([code, edit]) => {
+    const event = TOURNAMENTS.find((t) => t.code === code);
+    if (event && edit) Object.assign(event, edit);
+  });
+
+  Object.entries(store.matchTimes).forEach(([id, time]) => {
+    const m = MATCHES.find((x) => x.id === Number(id));
+    if (m) m.time = String(time || '');
+  });
+
+  reconcileElimTournaments();
+}
+
+export function openMatches() {
+  return MATCHES
+    .filter((m) => {
+      const t = TOURNAMENTS.find((x) => x.code === m.t);
+      return t && t.format === 'elim' && m.sides === null;
+    })
+    .map((m) => {
+      const t = TOURNAMENTS.find((x) => x.code === m.t);
+      return {
+        id: m.id,
+        code: t.code,
+        label: `${t.name} · ${sessionLong(t, m)} · ${m.time}`,
+        eligible: eligibleFor(m),
+      };
+    });
+}
+
+export function recordResult(matchId, teamA, scoreA, teamB, scoreB) {
+  const m = MATCHES.find((x) => x.id === Number(matchId));
+  if (!m || m.sides !== null) return { ok: false, error: 'session not open' };
+
+  const a = Number(teamA);
+  const b = Number(teamB);
+  const sa = Number(scoreA);
+  const sb = Number(scoreB);
+  const eligible = eligibleFor(m);
+  if (!eligible.length) return { ok: false, error: 'awaiting previous round' };
+  if (a === b || !eligible.includes(a) || !eligible.includes(b)) return { ok: false, error: 'choose two eligible teams' };
+  if (!Number.isInteger(sa) || !Number.isInteger(sb) || sa < 0 || sb < 0) return { ok: false, error: 'scores must be whole numbers' };
+  if (sa === sb) return { ok: false, error: 'scores cannot tie' };
+
+  const sides = sa > sb ? [[a, sa], [b, sb]] : [[b, sb], [a, sa]];
+  m.sides = sides;
+  delete m.hint;
+  store.results[String(m.id)] = sides;
+  saveStore();
+  reconcileElimTournaments();
+  return { ok: true };
+}
+
+function codeForName(name) {
+  const base = (name.match(/[A-Za-z0-9]+/g) || [])
+    .slice(0, 3)
+    .map((word) => word[0].toUpperCase())
+    .join('') || 'T';
+  const used = new Set(TOURNAMENTS.map((t) => t.code));
+  if (!used.has(base)) return base;
+  let n = 1;
+  while (used.has(`${base}${n}`)) n += 1;
+  return `${base}${n}`;
+}
+
+export function createTournament({ name, prize, dates, teams }) {
+  const cleanName = String(name || '').trim();
+  const teamIds = (teams || []).map(Number);
+  const prizeNumber = Number(prize);
+  const cleanDates = String(dates || '').trim();
+  if (!cleanName) return { ok: false, error: 'name required' };
+  if (!Number.isFinite(prizeNumber) || prizeNumber < 500) return { ok: false, error: 'prize must be at least 500' };
+  if (!cleanDates) return { ok: false, error: 'dates required' };
+  if (teamIds.length !== 4 || new Set(teamIds).size !== 4 || teamIds.some((id) => !TEAMS[id])) {
+    return { ok: false, error: 'choose four distinct teams' };
+  }
+
+  const code = codeForName(cleanName);
+  const maxId = Math.max(...MATCHES.map((m) => m.id));
+  const dateTokens = cleanDates.split(/\s+/);
+  const tournament = {
+    code,
+    name: cleanName,
+    game: 'Valorant',
+    format: 'elim',
+    formatLabel: 'SINGLE ELIMINATION',
+    status: 'upcoming',
+    prize: Math.trunc(prizeNumber).toLocaleString('en-US'),
+    dates: cleanDates,
+    month: `${dateTokens[0]} ${dateTokens[dateTokens.length - 1]}`,
+    size: '4 TEAMS',
+    field: teamIds,
+    champion: null,
+    note: '4 teams registered',
+    glyph: NEW_GLYPHS[store.created.length % NEW_GLYPHS.length],
+  };
+  const matches = [
+    { id: maxId + 1, t: code, round: 1, slot: 1, time: 'DAY 1 · 15:00', sides: null },
+    { id: maxId + 2, t: code, round: 1, slot: 2, time: 'DAY 1 · 18:00', sides: null },
+    { id: maxId + 3, t: code, round: 2, slot: 1, time: 'DAY 2 · 17:00', sides: null },
+  ];
+
+  TOURNAMENTS.splice(1, 0, tournament);
+  MATCHES.push(...matches);
+  store.created.push({ tournament, matches });
+  saveStore();
+  reconcileElimTournaments();
+  return { ok: true, code };
+}
+
+export function saveCreator(id, fields) {
+  const clean = {
+    name: String(fields && fields.name || '').trim(),
+    twitch: String(fields && fields.twitch || '').trim(),
+    instagram: String(fields && fields.instagram || '').trim(),
+    twitter: String(fields && fields.twitter || '').trim(),
+    pic: String(fields && fields.pic || '').trim(),
+  };
+  if (!clean.name) return { ok: false, error: 'name required' };
+  if (!clean.twitch && !clean.instagram && !clean.twitter) return { ok: false, error: 'at least one link required' };
+
+  if (id == null) {
+    const nextId = CREATORS.length ? Math.max(...CREATORS.map((creator) => creator.id)) + 1 : 1;
+    CREATORS.push({ id: nextId, ...clean });
+    persistCreators();
+    return { ok: true, id: nextId };
+  }
+
+  const creatorId = Number(id);
+  const creator = CREATORS.find((entry) => entry.id === creatorId);
+  if (!creator) return { ok: false, error: 'creator not found' };
+  Object.assign(creator, clean);
+  persistCreators();
+  return { ok: true, id: creatorId };
+}
+
+export function assignCreator({ creatorId, code, role, rate }) {
+  const cleanCreatorId = Number(creatorId);
+  const cleanCode = String(code || '').trim();
+  const cleanRole = String(role || '').trim();
+  const cleanRate = Number(rate);
+
+  if (!CREATORS.some((creator) => creator.id === cleanCreatorId)) return { ok: false, error: 'creator not found' };
+  if (!TOURNAMENTS.some((event) => event.code === cleanCode)) return { ok: false, error: 'event not found' };
+  if (!cleanRole) return { ok: false, error: 'role required' };
+  if (String(rate).trim() === '' || !Number.isFinite(cleanRate) || cleanRate < 0) return { ok: false, error: 'rate must be nonnegative' };
+  if (CREATOR_ASSIGNMENTS.some((assignment) => assignment.creatorId === cleanCreatorId && assignment.code === cleanCode)) {
+    return { ok: false, error: 'already assigned to that event' };
+  }
+
+  CREATOR_ASSIGNMENTS.push({
+    creatorId: cleanCreatorId,
+    code: cleanCode,
+    role: cleanRole,
+    rate: cleanRate,
+    status: 'active',
+  });
+  persistCreators();
+  return { ok: true };
+}
+
+export function removeAssignment(creatorId, code) {
+  const cleanCreatorId = Number(creatorId);
+  const cleanCode = String(code || '').trim();
+  const index = CREATOR_ASSIGNMENTS.findIndex((assignment) => assignment.creatorId === cleanCreatorId && assignment.code === cleanCode);
+  if (index >= 0) {
+    CREATOR_ASSIGNMENTS.splice(index, 1);
+    persistCreators();
+  }
+  return { ok: true };
+}
+
+function stampNow() {
+  const now = new Date();
+  return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+}
+
+function playerCheckinEvent(code) {
+  const cleanCode = String(code || '').trim();
+  const event = TOURNAMENTS.find((t) => t.code === cleanCode);
+  if (!event || event.format !== 'elim' || !Array.isArray(event.field)) return { ok: false, error: 'event not found' };
+  return { ok: true, code: cleanCode, event };
+}
+
+export function playerCheckinsFor(code) {
+  return playerCheckins[String(code || '').trim()] || {};
+}
+
+export function playerCheckIn(code, pid) {
+  const cleanPid = Number(pid);
+  const checkedEvent = playerCheckinEvent(code);
+  if (!checkedEvent.ok) return checkedEvent;
+
+  const player = PLAYERS[cleanPid];
+  if (!player) return { ok: false, error: 'player not found' };
+  if (!checkedEvent.event.field.includes(player[1])) return { ok: false, error: 'player not registered' };
+
+  const eventCheckins = playerCheckins[checkedEvent.code] || (playerCheckins[checkedEvent.code] = {});
+  if (eventCheckins[String(cleanPid)]) return { ok: false, error: 'already checked in' };
+
+  eventCheckins[String(cleanPid)] = stampNow();
+  saveStore();
+  return { ok: true };
+}
+
+export function undoPlayerCheckIn(code, pid) {
+  const cleanCode = String(code || '').trim();
+  const cleanPid = String(Number(pid));
+  if (playerCheckins[cleanCode] && playerCheckins[cleanCode][cleanPid]) {
+    delete playerCheckins[cleanCode][cleanPid];
+    saveStore();
+  }
+  return { ok: true };
+}
+
+export function checkInTeam(code, teamId) {
+  const cleanTeamId = Number(teamId);
+  const checkedEvent = playerCheckinEvent(code);
+  if (!checkedEvent.ok) return checkedEvent;
+  if (!checkedEvent.event.field.includes(cleanTeamId)) {
+    return { ok: false, error: 'team not registered' };
+  }
+
+  const eventCheckins = playerCheckins[checkedEvent.code] || (playerCheckins[checkedEvent.code] = {});
+  const time = stampNow();
+  let stamped = 0;
+  rosterOf(cleanTeamId).forEach((player) => {
+    const key = String(player.id);
+    if (!eventCheckins[key]) {
+      eventCheckins[key] = time;
+      stamped += 1;
+    }
+  });
+
+  saveStore();
+  return { ok: true, stamped };
+}
+
+export function undoTeam(code, teamId) {
+  const cleanCode = String(code || '').trim();
+  const cleanTeamId = Number(teamId);
+  const eventCheckins = playerCheckins[cleanCode];
+  if (eventCheckins) {
+    rosterOf(cleanTeamId).forEach((player) => {
+      delete eventCheckins[String(player.id)];
+    });
+    saveStore();
+  }
+  return { ok: true };
+}
+
+export function resetDemo() {
+  try {
+    if (globalThis.localStorage) globalThis.localStorage.removeItem(STORE_KEY);
+  } catch {
+    // The page reload below resets in-memory state for blocked storage.
+  }
+  globalThis.location.reload();
+}
+
+applyOverrides();
 
 export function rosterOf(teamId) {
   return Object.entries(PLAYERS)

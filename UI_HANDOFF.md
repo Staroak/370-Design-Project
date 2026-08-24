@@ -90,6 +90,35 @@ and MySQL has no real row-level security. So:
   the API layer (org/player scoping in `WHERE` clauses), and treat the view
   definitions as the specification of what each role may see.
 
+## Admin editability (Site Editor)
+
+Everything the audience sees is either derived from data or editable in the mock:
+
+- **`#/admin/site` (Site Editor, admin rolebar):** three tabs. EVENTS edits an
+  event's name, prize, dates, note, champion meta/prize copy, and every match
+  time. TEAMS edits name, captain, founded, region (renames propagate into
+  champion records and standings). PLAYERS edits IGN and jersey via search
+  (IGN renames propagate into solo/lobby match rows and champion records).
+- **Derived, so they follow result entry:** TFT standings (`tftStandings()`
+  computes from lobby matches; the old hardcoded table is gone), Rocket League
+  titles and entrants, team region on team pages, footer event/prize totals.
+- **Persistence:** same localStorage store as the ops console, new keys
+  `eventEdits`, `matchTimes`, `teamEdits`, `playerEdits` (all backward
+  compatible; RESET DEMO DATA clears them). Phase 2 maps these to UPDATEs on
+  `Tournament`, `Match`, `Teams`, `Players`.
+- **Input guard:** mutators reject `<` and `>` in free text because several
+  audience renderers interpolate names unescaped; the phase-2 API should
+  escape at render instead.
+- **Fixed along the way:** `reconcileElimTournaments` no longer clobbers seed
+  champion blurbs (Creator Cup and Winter Clash showed "RESULT ENTERED IN THE
+  ADMIN CONSOLE" on every load).
+- **Proof harness:** `node ui/smoke.mjs` (25 assertions) covers the derived
+  standings, mutator validation, rename propagation, and the reconcile fix.
+
+Still not editable (deliberate): recorded results and K/D/A stats corrections,
+lobby placements, RL game scores, roster moves between teams, site branding,
+and constellation glyphs.
+
 ## Known caveats left open (deliberately)
 
 - The 4 BCNF-violating relations are reported, not normalized (Sprint 5 decision —
